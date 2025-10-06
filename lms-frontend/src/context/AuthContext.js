@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
+  const [loading, setLoading] = useState(true); // <--- Add loading state
 
   // Load user info from localStorage on app start
   useEffect(() => {
@@ -24,6 +25,8 @@ export const AuthProvider = ({ children }) => {
       setEmail(storedEmail);
       setRole(storedRole);
     }
+
+    setLoading(false); // Finished checking localStorage
   }, []);
 
   const login = (token, user) => {
@@ -50,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, userId, name, email, role }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, userId, name, email, role, loading }}>
       {children}
     </AuthContext.Provider>
   );
