@@ -21,6 +21,14 @@ const Course = sequelize.define('Course', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  startDate: {
+    type: DataTypes.DATEONLY,  // or DataTypes.DATE if you need time info
+    allowNull: false,
+  },
+  endDate: {
+    type: DataTypes.DATEONLY,  // or DataTypes.DATE if you need time info
+    allowNull: false,
+  },
   teacherId: { // Foreign Key
     type: DataTypes.INTEGER,
     allowNull: false,

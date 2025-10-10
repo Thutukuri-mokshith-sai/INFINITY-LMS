@@ -38,35 +38,41 @@ const Login = () => {
       y: e.clientY - rect.top,
     });
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setMessage("");
+  setLoading(true);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage("");
-    setLoading(true);
+  try {
+    const res = await fetch("http://localhost:3000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-    try {
-      // NOTE: Ensure your backend server is running on this port
-      const res = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    const data = await res.json();
+    setLoading(false);
 
-      const data = await res.json();
-      setLoading(false);
+    if (res.ok) {
+      login(data.token, data.user);
 
-      if (res.ok) {
-        login(data.token, data.user);
-        navigate("/dashboard");
+      // Redirect based on role
+      if (data.user.role === "Teacher") {
+        navigate("/Teacher");
+      } else if (data.user.role === "Student") {
+        navigate("/Student");
       } else {
-        setMessage(data.message || "Login failed");
+        navigate("/dashboard"); // fallback
       }
-    } catch (err) {
-      console.error(err);
-      setMessage("Server error. Try again later.");
-      setLoading(false);
+    } else {
+      setMessage(data.message || "Login failed");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    setMessage("Server error. Try again later.");
+    setLoading(false);
+  }
+};
 
   return (
     <>

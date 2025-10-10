@@ -1,0 +1,1217 @@
+/* ============================================
+   TEACHERCOURSES.CSS - NEON THEME
+   Complete Styling for Teacher Course Management
+   ============================================ */
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  /* Primary Neon Colors */
+  --neon-color: #00d4ff;
+  --dark-bg: #0a1628;
+  --light-text: #e0f7fa;
+  --red-neon: #ff073a;
+  --highlight-green: #00ff88;
+  
+  /* Glow Effects */
+  --neon-shadow-blue: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3);
+  --neon-shadow-red: 0 0 10px rgba(255, 7, 58, 0.5), 0 0 20px rgba(255, 7, 58, 0.3);
+  --secondary-shadow: 0 0 10px rgba(0, 255, 136, 0.5), 0 0 20px rgba(0, 255, 136, 0.3);
+  
+  /* Layout */
+  --sidebar-width-open: 250px;
+  --sidebar-width-closed: 70px;
+  --navbar-height: 70px;
+  
+  /* Card Backgrounds */
+  --card-bg: rgba(15, 30, 50, 0.8);
+  --card-border: rgba(0, 212, 255, 0.3);
+}
+
+/* ===== BASE CONTAINER ===== */
+.app-container {
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at top left, #0a1628, #030b1a, #000);
+  min-height: 100vh;
+  color: var(--light-text);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== NAVBAR ===== */
+.dashboard-navbar-neon {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--navbar-height);
+  background: rgba(10, 22, 40, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--neon-color);
+  box-shadow: var(--neon-shadow-blue);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  z-index: 1000;
+}
+
+.sidebar-toggle-btn {
+  background: transparent;
+  border: 2px solid var(--neon-color);
+  color: var(--neon-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--neon-color);
+  color: var(--dark-bg);
+  box-shadow: var(--neon-shadow-blue);
+  transform: scale(1.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neon-color);
+  text-shadow: var(--neon-shadow-blue);
+}
+
+.logo-icon {
+  font-size: 2rem;
+}
+
+.nav-profile-group {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.student-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--light-text);
+  transition: color 0.3s ease;
+}
+
+.student-name:hover {
+  color: var(--neon-color);
+  text-shadow: var(--neon-shadow-blue);
+}
+
+.btn-logout-neon {
+  background: transparent;
+  border: 2px solid var(--red-neon);
+  color: var(--red-neon);
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-logout-neon:hover {
+  background: var(--red-neon);
+  color: white;
+  box-shadow: var(--neon-shadow-red);
+  transform: translateY(-2px);
+}
+
+/* ===== SIDEBAR ===== */
+.dashboard-sidebar-neon {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  width: var(--sidebar-width-open);
+  height: calc(100vh - var(--navbar-height));
+  background: rgba(10, 22, 40, 0.95);
+  backdrop-filter: blur(10px);
+  border-right: 2px solid var(--neon-color);
+  box-shadow: var(--neon-shadow-blue);
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s ease;
+  z-index: 900;
+}
+
+.dashboard-sidebar-neon.sidebar-closed {
+  width: var(--sidebar-width-closed);
+}
+
+.sidebar-header {
+  padding: 1.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--neon-color);
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  color: var(--light-text);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-left-color: var(--neon-color);
+  color: var(--neon-color);
+  box-shadow: inset var(--neon-shadow-blue);
+}
+
+.nav-link.active {
+  background: rgba(0, 212, 255, 0.2);
+  border-left-color: var(--neon-color);
+  color: var(--neon-color);
+  font-weight: 600;
+}
+
+.sidebar-closed .link-text {
+  display: none;
+}
+
+.nav-link svg {
+  min-width: 1.5rem;
+  font-size: 1.3rem;
+}
+
+/* ===== MAIN CONTENT AREA ===== */
+.main-content-area {
+  margin-top: var(--navbar-height);
+  margin-left: var(--sidebar-width-open);
+  padding: 2rem;
+  min-height: calc(100vh - var(--navbar-height));
+  transition: margin-left 0.3s ease;
+}
+
+.main-content-area.sidebar-closed-content {
+  margin-left: var(--sidebar-width-closed);
+}
+
+/* ===== DASHBOARD SECTION ===== */
+.dashboard-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.section-title-neon {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--neon-color);
+  text-shadow: var(--neon-shadow-blue);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 2px solid var(--neon-color);
+  padding-bottom: 1rem;
+}
+
+.section-subtitle-neon {
+  font-size: 1rem;
+  color: rgba(224, 247, 250, 0.7);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* ===== NEW COURSE BUTTON ===== */
+.new-course-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+/* ===== MESSAGE BOXES ===== */
+.message-box {
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-box.success-neon {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid var(--highlight-green);
+  color: var(--highlight-green);
+  box-shadow: var(--secondary-shadow);
+}
+
+.message-box.error-neon {
+  background: rgba(255, 7, 58, 0.1);
+  border: 1px solid var(--red-neon);
+  color: var(--red-neon);
+  box-shadow: var(--neon-shadow-red);
+}
+
+.message-box.secondary-neon {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid var(--neon-color);
+  color: var(--neon-color);
+  box-shadow: var(--neon-shadow-blue);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===== COURSE LIST GRID ===== */
+.course-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* ===== COURSE CARD ===== */
+.course-card-neon {
+  background: rgba(15, 30, 50, 0.9);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.course-card-neon:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--neon-shadow-blue), 0 8px 30px rgba(0, 0, 0, 0.5);
+  border-color: var(--neon-color);
+}
+
+.course-title-card {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--neon-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.course-description-card {
+  color: rgba(224, 247, 250, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.course-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(224, 247, 250, 0.7);
+  padding: 1rem 0;
+  border-top: 1px solid rgba(0, 212, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.course-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.course-meta svg {
+  color: var(--highlight-green);
+}
+
+/* ===== CARD ACTIONS ===== */
+.card-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+.btn-icon-neon {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 2px solid;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-edit {
+  border-color: var(--neon-color);
+  color: var(--neon-color);
+}
+
+.btn-edit:hover {
+  background: var(--neon-color);
+  color: var(--dark-bg);
+  box-shadow: var(--neon-shadow-blue);
+  transform: translateY(-2px);
+}
+
+.btn-delete {
+  border-color: var(--red-neon);
+  color: var(--red-neon);
+}
+
+.btn-delete:hover {
+  background: var(--red-neon);
+  color: white;
+  box-shadow: var(--neon-shadow-red);
+  transform: translateY(-2px);
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary-neon {
+  background: transparent;
+  border: 2px solid var(--neon-color);
+  color: var(--neon-color);
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-primary-neon:hover {
+  background: var(--neon-color);
+  color: var(--dark-bg);
+  box-shadow: var(--neon-shadow-blue);
+  transform: translateY(-3px);
+}
+
+.btn-primary-neon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary-neon {
+  background: transparent;
+  border: 2px solid var(--highlight-green);
+  color: var(--highlight-green);
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary-neon:hover {
+  background: var(--highlight-green);
+  color: var(--dark-bg);
+  box-shadow: var(--secondary-shadow);
+  transform: translateY(-3px);
+}
+
+.btn-secondary-neon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-delete-neon {
+  background: transparent;
+  border: 2px solid var(--red-neon);
+  color: var(--red-neon);
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-delete-neon:hover {
+  background: var(--red-neon);
+  color: white;
+  box-shadow: var(--neon-shadow-red);
+  transform: translateY(-3px);
+}
+
+.btn-delete-neon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== MODAL STYLES ===== */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: var(--dark-bg);
+  border: 2px solid var(--neon-color);
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--neon-shadow-blue), 0 0 40px rgba(0, 212, 255, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--card-border);
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  color: var(--neon-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.close-btn {
+  background: transparent;
+  border: 2px solid var(--red-neon);
+  color: var(--red-neon);
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: var(--red-neon);
+  color: white;
+  box-shadow: var(--neon-shadow-red);
+  transform: rotate(90deg);
+}
+
+/* ===== FORM STYLES IN MODAL ===== */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--light-text);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(15, 30, 50, 0.8);
+  border: 2px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--light-text);
+  font-size: 0.95rem;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--neon-color);
+  box-shadow: var(--neon-shadow-blue);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.warning-text {
+  color: var(--red-neon);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+/* ===== WIDGET CARD (GENERAL) ===== */
+.widget-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+.dashboard-sidebar-neon::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-sidebar-neon::-webkit-scrollbar-track,
+.modal-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-sidebar-neon::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--neon-color);
+  border-radius: 10px;
+}
+
+.dashboard-sidebar-neon::-webkit-scrollbar-thumb:hover,
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--highlight-green);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+  .course-list-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Navbar adjustments */
+  .dashboard-navbar-neon {
+    padding: 0 1rem;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .nav-profile-group {
+    gap: 0.75rem;
+  }
+
+  .student-name {
+    font-size: 0.85rem;
+  }
+
+  .btn-logout-neon {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  /* Sidebar - collapse on mobile */
+  .dashboard-sidebar-neon {
+    transform: translateX(-100%);
+    width: 250px;
+  }
+
+  .dashboard-sidebar-neon:not(.sidebar-closed) {
+    transform: translateX(0);
+  }
+
+  /* Main content full width on mobile */
+  .main-content-area {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .main-content-area.sidebar-closed-content {
+    margin-left: 0;
+  }
+
+  /* Dashboard section */
+  .dashboard-section {
+    padding: 1.5rem;
+  }
+
+  .section-title-neon {
+    font-size: 1.5rem;
+  }
+
+  /* Course grid - single column */
+  .course-list-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Card actions stack vertically */
+  .card-actions {
+    flex-direction: column;
+  }
+
+  /* Modal adjustments */
+  .modal-content {
+    padding: 1.5rem;
+    max-width: 95%;
+  }
+
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  /* Form grid - single column */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form actions stack */
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-navbar-neon {
+    height: 60px;
+  }
+
+  .main-content-area {
+    margin-top: 60px;
+  }
+
+  .logo {
+    font-size: 1rem;
+  }
+
+  .sidebar-toggle-btn {
+    font-size: 1.2rem;
+    padding: 0.4rem;
+  }
+
+  .section-title-neon {
+    font-size: 1.3rem;
+    flex-wrap: wrap;
+  }
+
+  .course-title-card {
+    font-size: 1.2rem;
+  }
+
+  .btn-primary-neon,
+  .btn-secondary-neon,
+  .btn-delete-neon {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+/* ============================================
+  MISSING STYLES FOR TEACHER COURSE DETAILS
+  ============================================ */
+
+/* --- GENERAL WIDGETS --- */
+
+.course-details-card-neon {
+    /* Inherits from .widget-card, but give it a stronger focus */
+    padding: 2.5rem;
+    border: 2px solid var(--neon-color);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5), 0 0 30px rgba(0, 212, 255, 0.2);
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    /* To visually distinguish it */
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 20px !important;
+}
+
+/* --- Course Details Grid --- */
+.details-grid p {
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.5;
+}
+
+.details-grid p strong {
+    color: var(--highlight-green);
+    font-weight: 600;
+}
+
+.details-grid svg {
+    color: var(--neon-color);
+}
+
+/* --- Action Sections --- */
+.course-action-sections h3 {
+    color: var(--highlight-green);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    border-bottom: 1px dashed var(--highlight-green);
+    padding-bottom: 5px;
+}
+
+/* --- Assignment Item Card --- */
+.assignment-item-card {
+    border-left: 5px solid var(--highlight-green) !important; /* Emphasize assignment */
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.assignment-item-card:hover {
+    background: rgba(15, 30, 50, 1.0);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+    transform: translateX(5px);
+}
+
+.assignment-item-card h5 {
+    font-size: 1.1rem;
+    color: var(--highlight-green);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.assignment-actions .btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 5px;
+}
+
+.neon-link {
+    color: var(--neon-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.neon-link:hover {
+    color: var(--highlight-green);
+    text-decoration: underline;
+}
+
+/* --- Student Roster / Data Table --- */
+
+.data-table-neon {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.data-table-neon th,
+.data-table-neon td {
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    font-size: 0.9rem;
+}
+
+.data-table-neon th {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--neon-color);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table-neon tr:hover {
+    background-color: rgba(255, 7, 58, 0.05); /* Subtle pink hover for roster */
+}
+
+/* --- FORM STYLES (Assignment Form) --- */
+/* The general .form-group styles are good, but we need the neon specific ones */
+
+.form-neon {
+    /* Inherits general form layout, but ensure background is clear for the form */
+    background: rgba(10, 22, 40, 0.9);
+    padding: 1.5rem;
+    border-radius: 10px;
+}
+
+.form-group-neon {
+    margin-bottom: 1.2rem;
+}
+
+.form-group-neon label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--highlight-green); /* Use highlight green for field labels */
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+.required-star {
+    color: var(--red-neon);
+    font-weight: 700;
+    margin-left: 5px;
+}
+
+.form-group-neon input,
+.form-group-neon textarea {
+    width: 100%;
+    padding: 0.8rem;
+    background: rgba(15, 30, 50, 0.8);
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    color: var(--light-text);
+    font-size: 0.95rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.form-group-neon input:focus,
+.form-group-neon textarea:focus {
+    outline: none;
+    border-color: var(--neon-color);
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.8);
+}
+
+/* Resource fields in form */
+.resource-fields {
+    /* Responsive adjustment for resource fields */
+    display: grid;
+    grid-template-columns: 1fr 2fr 50px; /* Title | Link | Button */
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.btn-icon-danger-neon {
+    background: transparent;
+    border: 2px solid var(--red-neon);
+    color: var(--red-neon);
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-icon-danger-neon:hover {
+    background: var(--red-neon);
+    color: white;
+    box-shadow: var(--neon-shadow-red);
+}
+
+/* --- Responsive Adjustments for Course Details --- */
+
+@media (max-width: 992px) {
+    .details-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .details-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .resource-fields {
+        grid-template-columns: 1fr !important; /* Stack resource fields vertically */
+    }
+    
+    .resource-fields > div:last-child {
+        justify-content: flex-start !important;
+        align-items: center;
+        margin-top: -10px;
+    }
+}
+/* ============================================
+   NEW STYLES FOR TeacherAssignmentSubmissions.jsx
+   ============================================ */
+
+/* --- GENERAL BUTTON ICON STYLES --- */
+
+/* Base for icon buttons used in modals, lists, and tables */
+.btn-icon-primary-neon,
+.btn-icon-secondary-neon,
+.btn-icon-danger-neon,
+.btn-icon-link-neon {
+    /* Inherit base styles from existing buttons to maintain consistency */
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    line-height: 1; /* Ensures proper alignment in table cells */
+}
+
+/* Primary (Grade/Save) - Uses Neon Blue */
+.btn-icon-primary-neon {
+    border: 2px solid var(--neon-color);
+    color: var(--neon-color);
+    background: transparent;
+}
+
+.btn-icon-primary-neon:hover {
+    background: var(--neon-color);
+    color: var(--dark-bg);
+    box-shadow: var(--neon-shadow-blue);
+    transform: translateY(-1px);
+}
+
+/* Secondary (View/Back Link) - Uses Highlight Green */
+.btn-icon-secondary-neon {
+    border: 2px solid var(--highlight-green);
+    color: var(--highlight-green);
+    background: transparent;
+}
+
+.btn-icon-secondary-neon:hover {
+    background: var(--highlight-green);
+    color: var(--dark-bg);
+    box-shadow: var(--secondary-shadow);
+    transform: translateY(-1px);
+}
+
+/* Danger (Delete) - Uses Neon Red */
+/* The existing .btn-icon-danger-neon in the assignment form is more compact. 
+   Redefine/override for a button-like appearance in the details panel. */
+.btn-icon-danger-neon {
+    border: 2px solid var(--red-neon);
+    color: var(--red-neon);
+    background: transparent;
+}
+
+.btn-icon-danger-neon:hover {
+    background: var(--red-neon);
+    color: white;
+    box-shadow: var(--neon-shadow-red);
+    transform: translateY(-1px);
+}
+
+/* Link/Download (Submitted Resource Attachments) - Compact and subtle */
+.btn-icon-link-neon {
+    padding: 5px 8px; /* Extra compact */
+    font-size: 0.8rem;
+    border: 1px solid var(--card-border);
+    color: var(--light-text);
+    background: rgba(15, 30, 50, 0.5);
+    margin-left: 5px; /* Spacing between links */
+}
+
+.btn-icon-link-neon:hover {
+    border-color: var(--neon-color);
+    color: var(--neon-color);
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+}
+
+/* --- ASSIGNMENT DETAILS CARD --- */
+
+.assignment-details-card-neon {
+    /* Inherits from .widget-card */
+    border: 2px solid var(--neon-color);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5), 0 0 30px rgba(0, 212, 255, 0.2);
+    margin-bottom: 2rem;
+}
+
+.assignment-details-card-neon h2 {
+    color: var(--neon-color);
+    font-size: 1.8rem;
+}
+
+.assignment-details-card-neon p strong {
+    color: var(--highlight-green);
+}
+
+.assignment-details-card-neon ul {
+    list-style-type: none; /* Remove default dots */
+}
+
+.assignment-details-card-neon li {
+    padding: 3px 0;
+    margin-left: 10px;
+    position: relative;
+}
+
+.assignment-details-card-neon li::before {
+    content: "—"; /* Custom list marker */
+    color: var(--neon-color);
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}
+
+/* --- SUBMISSIONS TABLE STYLING ADJUSTMENTS --- */
+
+.submission-list-section {
+    padding-top: 2rem;
+}
+
+/* Table Row Hover State */
+.data-table-neon tbody tr:hover {
+    background-color: rgba(0, 212, 255, 0.1); /* Use light blue hover for submissions */
+}
+
+/* Table Data Cell for Actions (to ensure alignment) */
+.data-table-neon td {
+    vertical-align: middle;
+}
+
+.data-table-neon td:last-child {
+    /* Action cell */
+    white-space: nowrap; /* Prevent action buttons from wrapping */
+}
+
+/* Style for the Grade Column (Not Graded '—') */
+.data-table-neon td:nth-child(4) {
+    font-weight: 600;
+    color: var(--neon-color); /* Highlight the Grade/Score */
+}
+
+/* --- MESSAGE BOXES FOR SUBMISSIONS --- */
+.message-box.info-neon {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--neon-color);
+    color: var(--neon-color);
+    box-shadow: var(--neon-shadow-blue);
+}
+
+.loading-text {
+    font-style: italic;
+    color: var(--neon-color);
+    padding: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- MODAL SPECIFIC STYLES --- */
+
+.form-title-neon {
+    font-size: 1.5rem;
+    color: var(--neon-color);
+    text-shadow: var(--neon-shadow-blue);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--highlight-green);
+}
