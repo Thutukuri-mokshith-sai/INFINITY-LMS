@@ -9,7 +9,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext"; 
 import './StudentDashboard.css'; 
 
-const API_BASE_URL = 'http://localhost:3000/api'; // <-- IMPORTANT: Set your backend API URL
+const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api'; // <-- IMPORTANT: Set your backend API URL
 
 // --- Cloudinary Configuration ---
 const CLOUDINARY_CLOUD_NAME = 'dj0aqo53e'; // Your Cloud Name

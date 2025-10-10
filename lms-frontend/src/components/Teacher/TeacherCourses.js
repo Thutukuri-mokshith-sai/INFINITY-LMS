@@ -16,7 +16,7 @@ let courseCache = {
 
 
 // --- API FUNCTIONS (Unchanged) ---
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 /**
  * Fetches all courses created by the authenticated teacher.

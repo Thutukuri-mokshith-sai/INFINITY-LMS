@@ -8,7 +8,7 @@ import './CreateCourse.css';
 // ⭐️ REAL API CALL FUNCTION ⭐️
 const apiCreateCourse = async (courseData, token) => {
     // ⚠️ IMPORTANT: Replace with your actual backend URL
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+    const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
 
     try {
         const response = await axios.post(`${API_URL}/courses`, courseData, {

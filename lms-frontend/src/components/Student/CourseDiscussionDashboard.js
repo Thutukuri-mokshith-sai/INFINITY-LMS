@@ -9,7 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import './StudentDashboard.css'; // Assuming shared styles
 
 // --- Configuration ---
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 // --- Placeholder for CSS Variables (Must be defined for inline styles to work) ---
 // Defining these constants helps simulate CSS variables used in the original style blocks

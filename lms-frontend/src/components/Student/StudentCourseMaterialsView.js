@@ -11,7 +11,7 @@ import './StudentDashboard.css'; // <-- CSS Import
 
 // --- Configuration ---
 // 🚀 QoL Update: Added explicit /api to base URL for clarity
-const API_BASE_URL = 'http://localhost:3000/api'; 
+const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api'; 
 
 
 // ---------------------------------------------------------------------

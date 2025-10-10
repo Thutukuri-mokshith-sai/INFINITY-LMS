@@ -12,7 +12,7 @@ import { useAuth } from "../../context/AuthContext";
 import './StudentDashboard.css'; 
 
 // --- Configuration ---
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 // --- API Service Functions (Provided in prompt) ---
 const forumAPI = {

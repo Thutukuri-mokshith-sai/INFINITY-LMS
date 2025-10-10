@@ -12,7 +12,7 @@ import axios from 'axios';
 import './TeacherCourses.css'; 
 
 // --- API CONFIG ---
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 // --- CLOUDINARY CONFIG (Use environment variables in a real app) ---
 const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'duzmfqbkd'; // REPLACE THIS

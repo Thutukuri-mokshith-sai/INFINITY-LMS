@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 
 // API Base
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 // --- CSS String to be injected ---
 const GRADES_CSS = `

@@ -12,7 +12,7 @@ import axios from 'axios'; // Import Axios for API calls
 
 // --- API Configuration ---
 // Assuming your API is running on localhost:3000 or the environment variable
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api'; 
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api'; 
 
 // ----------------------------------------------------------------------
 // --- Utility Components (No changes needed) ---

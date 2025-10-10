@@ -160,7 +160,7 @@ const TeacherDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-    const API_URL = 'http://localhost:3000/api/teacherdashboard/dashboard'; 
+    const API_URL = 'https://lms-portal-backend-h5k8.onrender.com/api/teacherdashboard/dashboard'; 
 
     // 4. MODIFIED FETCH DATA EFFECT
     useEffect(() => {

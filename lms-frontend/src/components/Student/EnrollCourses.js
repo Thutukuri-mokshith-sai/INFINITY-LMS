@@ -8,7 +8,7 @@ import './StudentDashboard.css'; // Assuming shared styles
 import { useAuth } from "../../context/AuthContext";
 
 // --- Configuration ---
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 // --- REUSED COMPONENTS (Keep these consistent for layout) ---
 

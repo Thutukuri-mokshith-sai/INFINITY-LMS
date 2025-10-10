@@ -102,7 +102,7 @@ const TeacherStudentsList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    const API_URL = 'http://localhost:3000/api/teacherdashboard/students';
+    const API_URL = 'https://lms-portal-backend-h5k8.onrender.com/api/teacherdashboard/students';
 
     // 3. FETCH DATA EFFECT
     useEffect(() => {

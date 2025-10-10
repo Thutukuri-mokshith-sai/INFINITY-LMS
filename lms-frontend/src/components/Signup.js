@@ -102,7 +102,7 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:3000/api/auth/register", {
+            const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, email, password, role }),
@@ -131,7 +131,7 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:3000/api/auth/verify-otp", {
+            const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/verify-otp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, otp }),
@@ -173,7 +173,7 @@ const Signup = () => {
         setLoading(true);
         setMessage("Requesting new OTP...");
         try {
-            const res = await fetch("http://localhost:3000/api/auth/resend-otp", {
+            const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/resend-otp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),

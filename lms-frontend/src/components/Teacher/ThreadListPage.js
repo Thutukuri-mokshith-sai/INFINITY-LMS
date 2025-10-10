@@ -12,7 +12,7 @@ import axios from 'axios';
 // Assuming the necessary CSS file exists for styling
 import './TeacherCourses.css'; 
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
 
 // ====================================================
 // 🚀 API FUNCTIONS (Mapped from forumController & routes)
