@@ -27,7 +27,9 @@ app.use(cors({
 
 // Middleware
 app.use(express.json());
-
+app.get('/', (req, res) => {
+  res.send('Hi 👋, your LMS backend is running successfully!');
+});
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
