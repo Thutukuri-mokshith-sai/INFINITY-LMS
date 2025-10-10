@@ -13,9 +13,9 @@ const Thread = db.Thread;
 const Post = db.Post;
 const Like = db.Like;
 const Notification = db.Notification;
-const StudentProfile = db.StudentProfile; // Added StudentProfile
+const StudentProfile = db.StudentProfile; 
 
-// --- Course Management Controllers ---
+// --- Course Management Controllers (UNCHANGED) ---
 
 exports.createCourse = async (req, res) => {
     const teacherId = req.user.id; // Assuming teacher ID is available from auth middleware
@@ -130,7 +130,17 @@ exports.getTeacherDashboardData = async (req, res) => {
             Post.findAll({
                 order: [['createdAt', 'DESC']],
                 limit: 4,
-                attributes: ['id', 'content', 'createdAt'],
+                attributes: [
+                    'id', 
+                    'content', 
+                    'createdAt',
+                    // **FIXED**: Using polymorphic keys (entityId, entityType) and cleaning up literal string.
+                    [literal(`(
+                        SELECT COUNT(*)
+                        FROM "Likes" AS "Like"
+                        WHERE "Like"."entityId" = "Post"."id" AND "Like"."entityType" = 'Post'
+                    )`), 'likesCount'] 
+                ],
                 include: [
                     { 
                         model: User, as: 'Creator', attributes: ['name']
@@ -145,11 +155,7 @@ exports.getTeacherDashboardData = async (req, res) => {
                             include: [{ model: db.Course, as: 'Course', attributes: ['title'] }]
                         }]
                     },
-                    {
-                        model: Like, as: 'Likes',
-                        attributes: [] ,
-                        // Using a simple join here; actual count will rely on post-processing logic
-                    }
+                    // Removed the redundant/misleading 'Likes' include as we're using a literal count
                 ]
             }),
 
@@ -164,7 +170,7 @@ exports.getTeacherDashboardData = async (req, res) => {
 
         // 3. Post-processing
 
-        // Calculate Student Count Per Course
+        // Calculate Student Count Per Course (UNCHANGED)
         const studentsPerCourse = await Enrollment.findAll({
             where: { courseId: { [Op.in]: taughtCourseIds } },
             attributes: [
@@ -195,7 +201,7 @@ exports.getTeacherDashboardData = async (req, res) => {
                 posterName: post.Creator.name, 
                 courseTitle: post.Thread.Forum.Course.title,
                 threadTitle: post.Thread.title,
-                likesCount: post.Likes.length, 
+                likesCount: parseInt(post.get('likesCount') || 0, 10), // FIX: Use the calculated attribute
                 createdAt: post.createdAt,
             }));
 
@@ -229,7 +235,7 @@ exports.getTeacherDashboardData = async (req, res) => {
 
 // ---------------------------------------------------------------------
 
-// --- Student Management Controller (New) ---
+// --- Student Management Controller (New) (UNCHANGED) ---
 
 /**
  * @desc Get a list of all unique students enrolled in the teacher's courses, 
