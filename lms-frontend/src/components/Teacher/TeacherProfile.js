@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    FaUserCircle, FaSignOutAlt, FaBookOpen, FaClipboardList,
-    FaCheckCircle, FaStar, FaListAlt, FaCalendarAlt,
+    FaUserCircle, FaSignOutAlt,
+    FaCheckCircle,  FaListAlt, 
     FaUniversity, FaArrowRight, FaClock, FaBars, FaTimes,
     FaEnvelope, FaToolbox, FaIdCard, FaPencilAlt, FaSave, FaExclamationTriangle, FaSpinner,
     FaChalkboardTeacher, FaBriefcase, FaGraduationCap, FaPlusCircle // Added FaPlusCircle

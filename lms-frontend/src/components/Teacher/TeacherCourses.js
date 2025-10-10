@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { FaChalkboardTeacher, FaPlusCircle, FaEdit, FaTrash, FaClock, FaCalendarAlt, FaTimes, FaBars, FaUniversity, FaUserCircle, FaSignOutAlt, FaListAlt, FaGraduationCap, FaSpinner, FaInfoCircle } from 'react-icons/fa'; // ✅ Replaced FaUsers with FaInfoCircle
-import { Link, useNavigate } from 'react-router-dom';
+import { FaChalkboardTeacher, FaPlusCircle, FaEdit, FaTrash, FaClock, FaCalendarAlt, FaTimes, FaBars, FaUniversity, FaUserCircle, FaSignOutAlt, FaListAlt, FaGraduationCap, FaSpinner, FaInfoCircle } from 'react-icons/fa';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // ✅ ADDED useLocation
 import { useAuth } from "../../context/AuthContext";
 import axios from 'axios';
-import './TeacherCourses.css'; // Reusing the same styles for dashboard layout
+import './TeacherCourses.css';
 
-// --- API FUNCTIONS (Students API removed) ---
+// ----------------------------------------------------------------------
+// 1. GLOBAL/IN-MEMORY CACHE SIMULATION
+// This object will persist course data across unmounts/mounts within the session.
+let courseCache = {
+    data: null,
+    isLoaded: false,
+};
+// ----------------------------------------------------------------------
+
+
+// --- API FUNCTIONS (Unchanged) ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 /**
@@ -56,18 +66,24 @@ const apiDeleteCourse = async (courseId, token) => {
     }
 };
 
-// ❌ Removed apiGetStudentsByCourse
-
 // --- MAIN COMPONENT ---
 const TeacherCourses = () => {
     const { isAuthenticated, name, role, logout, token } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ Access the location object
 
-    const [courses, setCourses] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // Check navigation state to see if we just came from a Course Creation success
+    const forceReload = location.state?.courseCreated === true; 
+    
+    // 2. STATE INITIALIZATION: Check cache first, but override if forced
+    const initialLoadingState = forceReload ? true : !courseCache.isLoaded;
+    const initialCoursesState = forceReload ? [] : courseCache.data;
+
+    const [courses, setCourses] = useState(initialCoursesState || []);
+    const [isLoading, setIsLoading] = useState(initialLoadingState);
     const [error, setError] = useState(null);
     
-    // UI State for Modals/Forms
+    // UI State for Modals/Forms (Unchanged)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingCourse, setEditingCourse] = useState(null);
@@ -75,47 +91,65 @@ const TeacherCourses = () => {
     const [deletingCourseId, setDeletingCourseId] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [modalMessage, setModalMessage] = useState({ text: '', isError: false });
+    const [activeViewId, setActiveViewId] = useState(null);
 
-    // ❌ Removed NEW STATE for View Students Modal (showStudentsModal, viewingCourse, etc.)
-    // Note: Since 'activeViewId' is used later, we'll keep a placeholder if needed,
-    // but the handler will now navigate, making complex 'active' state for the card less necessary.
-    // For simplicity and direct navigation, we will use a dedicated function instead of a modal state.
-    
-    const [activeViewId, setActiveViewId] = useState(null); // Keep this to manage card styling during action
-
-    // Redirect unauthenticated users or non-teachers (optional, assuming protected routes)
-    useEffect(() => { 
-        if (!isAuthenticated || role !== 'Teacher') {
-            // navigate('/login'); 
-        }
-    }, [isAuthenticated, role, navigate]);
-
-    // --- FETCH DATA LOGIC (Unchanged) ---
+    // --- FETCH DATA LOGIC (Modified to use caching and forceReload) ---
     const fetchCourses = async () => { 
-        if (!token) return;
+        if (!token) {
+            setIsLoading(false);
+            return;
+        }
 
+        // 3. Conditional Cache Use: Only use cache if it's loaded AND we aren't forcing a reload.
+        if (courseCache.isLoaded && !forceReload) { 
+            setIsLoading(false);
+            setCourses(courseCache.data);
+            return;
+        }
+
+        // If we reach here, we are fetching data
         setIsLoading(true);
         setError(null);
         try {
             const data = await apiGetTeacherCourses(token);
+            
+            // Update component state AND the cache
             setCourses(data);
+            courseCache.data = data;
+            courseCache.isLoaded = true;
+
         } catch (err) {
             setError(err.message);
+            courseCache.isLoaded = false;
         } finally {
             setIsLoading(false);
+            
+            // Cleanup: Clear the navigation state after reload to prevent future reloads
+            if (forceReload) {
+                 navigate(location.pathname, { replace: true, state: {} });
+            }
         }
     };
 
-    // Initial data fetch (Unchanged)
+    // Initial data fetch
     useEffect(() => {
+        // The dependency array could be enhanced to include 'forceReload' if you want
+        // the effect to run again immediately upon navigation, but checking the initial
+        // state and location state on mount is often sufficient. 
+        // We'll keep it simple by relying on the initial state setup for now.
         fetchCourses();
-    }, [token]);
+    }, [token, forceReload]); // ✅ Added forceReload to dependencies
 
-    // --- HANDLERS (Unchanged) ---
+    // --- HANDLERS (Adjusted cache clear for mutation/logout) ---
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-    const handleLogout = logout;
+    
+    const handleLogout = () => {
+        // Clear cache on logout
+        courseCache = { data: null, isLoaded: false };
+        logout(); 
+    };
 
-    // --- EDIT COURSE HANDLERS (Updated to close other modals) ---
+    // --- EDIT COURSE HANDLERS (Cache update added) ---
     const openEditModal = (course) => { 
         const startDate = course.startDate.split('T')[0];
         const endDate = course.endDate.split('T')[0];
@@ -132,7 +166,7 @@ const TeacherCourses = () => {
         setShowEditModal(true);
         setShowDeleteModal(false); 
         setDeletingCourseId(null);
-        setActiveViewId(null); // Clear active view state
+        setActiveViewId(null);
     };
 
     const closeEditModal = () => { 
@@ -154,9 +188,14 @@ const TeacherCourses = () => {
         try {
             const updatedCourse = await apiUpdateCourse(editingCourse.id, editForm, token);
             
-            setCourses(prevCourses => prevCourses.map(c => 
-                c.id === updatedCourse.id ? updatedCourse : c
-            ));
+            setCourses(prevCourses => {
+                const newCourses = prevCourses.map(c => 
+                    c.id === updatedCourse.id ? updatedCourse : c
+                );
+                // Update the cache immediately after successful mutation
+                courseCache.data = newCourses; 
+                return newCourses;
+            });
 
             setModalMessage({ text: 'Course updated successfully! Redirecting...', isError: false });
             
@@ -167,14 +206,14 @@ const TeacherCourses = () => {
         }
     };
 
-    // --- DELETE COURSE HANDLERS (Updated to close other modals) ---
+    // --- DELETE COURSE HANDLERS (Cache update added) ---
     const openDeleteModal = (courseId) => { 
         setDeletingCourseId(courseId);
         setModalMessage({ text: '', isError: false });
         setShowDeleteModal(true);
         setShowEditModal(false); 
         setEditingCourse(null);
-        setActiveViewId(null); // Clear active view state
+        setActiveViewId(null);
     };
 
     const closeDeleteModal = () => { 
@@ -191,7 +230,12 @@ const TeacherCourses = () => {
         try {
             await apiDeleteCourse(deletingCourseId, token);
             
-            setCourses(prevCourses => prevCourses.filter(c => c.id !== deletingCourseId));
+            setCourses(prevCourses => {
+                const newCourses = prevCourses.filter(c => c.id !== deletingCourseId);
+                // Update the cache immediately after successful mutation
+                courseCache.data = newCourses; 
+                return newCourses;
+            });
             
             setModalMessage({ text: 'Course deleted successfully!', isError: false });
             
@@ -202,15 +246,11 @@ const TeacherCourses = () => {
         }
     };
 
-    // --- ✅ NEW HANDLER: Navigate to View Course Details ---
+    // --- HANDLER: Navigate to View Course Details (Unchanged) ---
     const handleViewCourseDetails = (courseId) => {
-        // Close other modals before navigating
         closeEditModal();
         closeDeleteModal();
-        // Set the active view ID for card styling feedback
         setActiveViewId(courseId); 
-        
-        // Perform the navigation
         navigate(`/teacher/course/${courseId}/details`);
     };
     // ------------------------------------
@@ -252,12 +292,10 @@ const TeacherCourses = () => {
                 <Link to="/teacher/profile" className="nav-link"> 
                     <FaUserCircle /> 
                     <span className="link-text">Profile</span>
-                    </Link>
-
+                </Link>
             </nav>
         </aside>
     );
-    // ...
 
     // --- UI RENDERINGS ---
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
@@ -268,10 +306,8 @@ const TeacherCourses = () => {
 
     const activeEditId = editingCourse ? editingCourse.id : null;
     const activeDeleteId = deletingCourseId;
-    // ✅ Re-using activeViewId to indicate the course whose details are about to be viewed/navigated to
     const activeNavId = activeViewId; 
 
-    // Determine if ANY modal is currently open (Students Modal removed)
     const isAnyModalOpen = showEditModal || showDeleteModal; 
 
     return (
@@ -282,7 +318,7 @@ const TeacherCourses = () => {
             <main className={mainContentClass}>
                 <div className="dashboard-section">
                     <h1 className="form-title-neon section-title-neon"><FaChalkboardTeacher /> My Courses</h1>
-                    <p className="form-subtitle section-subtitle-neon">Manage your created courses, update details, or view course specifics.</p> {/* Updated subtitle */}
+                    <p className="form-subtitle section-subtitle-neon">Manage your created courses, update details, or view course specifics.</p>
                     
                     <Link to="/teacher/courses/new" className="btn-primary-neon new-course-link">
                         <FaPlusCircle /> Create New Course
@@ -314,12 +350,10 @@ const TeacherCourses = () => {
                                         course={course} 
                                         openEditModal={openEditModal} 
                                         openDeleteModal={openDeleteModal} 
-                                        // ✅ Updated prop name and passed the new handler
                                         handleViewCourseDetails={handleViewCourseDetails} 
-                                        // Pass state down to control button visibility
                                         isEditing={activeEditId === course.id}
                                         isDeleting={activeDeleteId === course.id}
-                                        isNavigating={activeNavId === course.id} // ✅ Updated prop name
+                                        isNavigating={activeNavId === course.id}
                                         isAnyModalOpen={isAnyModalOpen} 
                                     />
                                 ))
@@ -347,24 +381,16 @@ const TeacherCourses = () => {
                 message={modalMessage}
                 isLoading={modalMessage.text.includes('Deleting')}
             />}
-
-            {/* ❌ Removed ViewStudentsModal */}
-
         </div>
     );
 };
 
 // ----------------------------------------------------------------------------------
-// --- HELPER COMPONENTS (MODIFIED) ---
+// --- HELPER COMPONENTS (Unchanged) ---
 // ----------------------------------------------------------------------------------
 
-// MODIFIED CourseCard component
-// ✅ Updated props: Replaced openStudentsModal/isViewing with handleViewCourseDetails/isNavigating
 const CourseCard = ({ course, openEditModal, openDeleteModal, handleViewCourseDetails, isEditing, isDeleting, isNavigating, isAnyModalOpen }) => {
-    // Logic: 
-    // Show a button if NO modal is open OR if the modal for that specific action is open for THIS course.
-
-    const showViewButton = !isAnyModalOpen || isNavigating; // Controls visibility/loading state for the view button
+    const showViewButton = !isAnyModalOpen || isNavigating;
     const showEditButton = !isAnyModalOpen || isEditing;
     const showDeleteButton = !isAnyModalOpen || isDeleting;
 
@@ -378,7 +404,6 @@ const CourseCard = ({ course, openEditModal, openDeleteModal, handleViewCourseDe
                 <span><FaCalendarAlt /> End: {new Date(course.endDate).toLocaleDateString()}</span>
             </div>
             <div className="card-actions">
-                {/* ✅ Updated View Course Details Button */}
                 {showViewButton && (
                     <button onClick={() => handleViewCourseDetails(course.id)} className="btn-icon-neon btn-secondary">
                         {isNavigating ? <FaSpinner className="spinner" /> : <FaInfoCircle />} View Details
@@ -400,11 +425,6 @@ const CourseCard = ({ course, openEditModal, openDeleteModal, handleViewCourseDe
         </div>
     );
 };
-
-
-// ❌ Removed ViewStudentsModal 
-
-// The rest of the modals remain unchanged: EditCourseModal and DeleteConfirmationModal
 
 const EditCourseModal = ({ course, form, handleChange, handleSubmit, handleClose, message, isLoading }) => { 
     return (

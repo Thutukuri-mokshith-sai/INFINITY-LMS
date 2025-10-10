@@ -5,19 +5,19 @@ import { FaSpinner, FaUser, FaEnvelope, FaLock, FaCheckCircle, FaUsers, FaKey } 
 
 // --- Reusable Neon Input Component (Same as Login) ---
 const NeonInput = ({ type, placeholder, value, onChange, Icon, readOnly = false }) => {
-  return (
-    <div className={`input-group ${readOnly ? 'input-group-readonly' : ''}`}>
-      <Icon className="input-icon" />
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required={!readOnly}
-        readOnly={readOnly}
-      />
-    </div>
-  );
+    return (
+        <div className={`input-group ${readOnly ? 'input-group-readonly' : ''}`}>
+            <Icon className="input-icon" />
+            <input
+                type={type}
+                placeholder={placeholder}
+                value={value}
+                onChange={onChange}
+                required={!readOnly}
+                readOnly={readOnly}
+            />
+        </div>
+    );
 };
 // ----------------------------------------------------
 
@@ -66,20 +66,21 @@ const Signup = () => {
     const [otpTimer, setOtpTimer] = useState(null);
 
 // Effect to handle the countdown timer
-    useEffect(() => {
-        if (countdown > 0) {
-            if (otpTimer) clearInterval(otpTimer);
-            const timer = setInterval(() => {
-                setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-            }, 1000);
-            setOtpTimer(timer);
-            return () => clearInterval(timer);
-        } else if (countdown === 0 && otpTimer) {
-            clearInterval(otpTimer);
-            setOtpTimer(null);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [countdown, step]); // Rerun effect when countdown or step changes
+    useEffect(() => {
+        if (countdown > 0) {
+            if (otpTimer) clearInterval(otpTimer);
+            const timer = setInterval(() => {
+                setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+            }, 1000);
+            setOtpTimer(timer);
+            return () => clearInterval(timer);
+        } else if (countdown === 0 && otpTimer) {
+            clearInterval(otpTimer);
+            setOtpTimer(null);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [countdown, step]); // Rerun effect when countdown or step changes
+    
     const startCountdown = () => {
         setCountdown(60);
     };
@@ -123,7 +124,7 @@ const Signup = () => {
         }
     };
 
-    // OTP verification
+    // OTP verification - MODIFIED
     const handleOTP = async (e) => {
         e.preventDefault();
         setMessage("");
@@ -140,11 +141,23 @@ const Signup = () => {
 
             if (res.ok) {
                 setMessage(data.message || "Verification successful! Redirecting...");
+                
                 // Clear timer if verification succeeds
                 if (otpTimer) clearInterval(otpTimer); 
-                // Auto log in and redirect
+                
+                // Auto log in
                 login(data.token, data.user); 
-                navigate("/dashboard");
+
+                // --- ROLE-BASED REDIRECTION LOGIC ---
+                if (data.user.role === "Teacher") {
+                    navigate("/Teacher");
+                } else if (data.user.role === "Student") {
+                    navigate("/Student");
+                } else {
+                    navigate("/dashboard"); // fallback
+                }
+                // --- END ROLE-BASED REDIRECTION LOGIC ---
+
             } else {
                 setMessage(data.message || "OTP verification failed.");
             }

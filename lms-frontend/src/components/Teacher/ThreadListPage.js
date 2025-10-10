@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-    FaChalkboardTeacher, FaPlusCircle, FaEdit, FaTrash, FaClock,
+    FaChalkboardTeacher, FaPlusCircle, FaEdit, FaTrash, 
     FaBars, FaUniversity, FaUserCircle, FaSignOutAlt,
     FaSpinner, FaInfoCircle, FaUsers, FaComments, FaEye,
     FaChevronLeft, FaHeart, FaComment, FaExclamationTriangle, FaTimes, FaSave,
@@ -53,12 +53,12 @@ const apiMarkNotificationAsRead = async (notificationId, token) => {
     return response.data;
 };
 
-const apiCreateForum = async (courseId, forumData, token) => {
-    const response = await axios.post(`${API_URL}/forums`, { courseId, ...forumData }, {
-        headers: { 'Authorization': `Bearer ${token}` },
-    });
-    return response.data;
-};
+// const apiCreateForum = async (courseId, forumData, token) => {
+//     const response = await axios.post(`${API_URL}/forums`, { courseId, ...forumData }, {
+//         headers: { 'Authorization': `Bearer ${token}` },
+//     });
+//     return response.data;
+// };
 
 const apiUpdateForum = async (forumId, forumData, token) => {
     const response = await axios.put(`${API_URL}/forums/${forumId}`, forumData, {

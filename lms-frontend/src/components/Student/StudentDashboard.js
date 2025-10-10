@@ -15,10 +15,10 @@ import axios from 'axios'; // Import Axios for API calls
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api'; 
 
 // ----------------------------------------------------------------------
-// --- Utility Components (Updated to handle real data structure) ---
+// --- Utility Components (No changes needed) ---
 // ----------------------------------------------------------------------
 
-// Profile Modal Component (No change needed)
+// Profile Modal Component
 const ProfileModal = ({ authData, onClose }) => {
     const { name, email, userId, role, logout } = authData;
     const modalRef = React.useRef();
@@ -63,7 +63,7 @@ const ProfileModal = ({ authData, onClose }) => {
     );
 };
 
-// Navbar Component (No change needed)
+// Navbar Component
 const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarToggle, isSidebarOpen }) => (
     
     <nav className="dashboard-navbar-neon">
@@ -78,7 +78,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
     </nav>
 );
 
-// Sidebar Component (No change needed)
+// Sidebar Component
 const DashboardSidebar = ({ isOpen }) => (
     <aside className={`dashboard-sidebar-neon ${!isOpen ? 'sidebar-closed' : ''}`}>
         <div className="sidebar-header">MENU</div>
@@ -93,7 +93,7 @@ const DashboardSidebar = ({ isOpen }) => (
     </aside>
 );
 
-// Course Card Component (Updated to use 'progress' directly)
+// Course Card Component
 const CourseCard = ({ course, actionType, onActionClick }) => {
     const isEnrolled = actionType === 'view';
     const progressText = isEnrolled ? `${course.progress}% Complete` : null;
@@ -123,7 +123,7 @@ const CourseCard = ({ course, actionType, onActionClick }) => {
 };
 
 // ----------------------------------------------------------------------
-// --- Widget Components (Updated/New to handle real API data) ---
+// --- Widget Components (No changes needed) ---
 // ----------------------------------------------------------------------
 
 const PendingAssignmentsWidget = ({ pendingAssignments }) => (
@@ -235,7 +235,7 @@ const RecentNotificationsWidget = ({ notifications }) => (
 
 
 // ----------------------------------------------------------------------
-// --- Main StudentDashboard Component ---
+// --- Main StudentDashboard Component (UPDATED useEffect) ---
 // ----------------------------------------------------------------------
 const StudentDashboard = () => {
     const auth = useAuth();
@@ -256,11 +256,13 @@ const StudentDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 2. API Call Effect
+    // 2. API Call Effect - UPDATED for automatic redirection on 401/403 errors
     useEffect(() => {
         const fetchDashboardData = async () => {
             if (!token) {
                 setLoading(false);
+                // Redirect if token is missing (though useAuth might handle this upstream)
+                if (!auth.isAuthenticated) navigate('/login');
                 return;
             }
             try {
@@ -275,6 +277,27 @@ const StudentDashboard = () => {
                 setError(null);
             } catch (err) {
                 console.error("Error fetching dashboard data:", err);
+                
+                // --- NEW REDIRECTION LOGIC ---
+                const statusCode = err.response ? err.response.status : null;
+                
+                // If the error is 401 Unauthorized or 403 Forbidden, 
+                // we assume the token is invalid/expired and redirect to login.
+                if (statusCode === 401 || statusCode === 403) {
+                    console.log("Unauthorized API access. Logging out and redirecting to login.");
+                    
+                    // Clear authentication state
+                    logout(); 
+                    
+                    // Redirect the user
+                    navigate('/login'); 
+                    
+                    // Prevent setting the on-screen error
+                    return; 
+                }
+                // --- END NEW REDIRECTION LOGIC ---
+
+                // Set a generic error for other failures (e.g., 500, network issues)
                 setError("Failed to load dashboard data. Please try again.");
             } finally {
                 setLoading(false);
@@ -282,7 +305,8 @@ const StudentDashboard = () => {
         };
 
         fetchDashboardData();
-    }, [token]);
+    // Added 'logout' and 'navigate' to dependency array for correctness
+    }, [token, logout, navigate, auth.isAuthenticated]);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -309,6 +333,8 @@ const StudentDashboard = () => {
     }
 
     if (error) {
+        // This will only be reached for errors other than 401/403 
+        // (which trigger an immediate redirect inside useEffect)
         return <div className="error-screen"><p>Error: {error}</p></div>;
     }
 

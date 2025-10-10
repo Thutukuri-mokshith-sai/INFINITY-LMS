@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserCircle, FaSignOutAlt, FaBookOpen, FaChalkboardTeacher, FaEdit, FaUserPlus, FaTasks, FaGraduationCap, FaListAlt, FaCalendarAlt, FaUniversity, FaArrowRight, FaClock, FaBars, FaTimes, FaPlusCircle, FaUsers, FaIdCard, FaEnvelope, FaToolbox, FaRegCommentDots, FaBell, FaThumbsUp } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaChalkboardTeacher, FaUserPlus, FaTasks, FaGraduationCap, FaListAlt, FaCalendarAlt, FaUniversity, FaArrowRight, FaClock, FaBars, FaTimes, FaPlusCircle, FaUsers, FaIdCard, FaEnvelope, FaToolbox, FaRegCommentDots, FaThumbsUp } from 'react-icons/fa';
 import './TeacherDashboard.css';
-
-// --- REAL AUTH CONTEXT IMPORT ---
-// ⚠️ ASSUMPTION: useAuth provides 'token' for API calls and user details.
 import { useAuth } from "../../context/AuthContext";
-
-// --- REAL REACT-ROUTER HOOKS & COMPONENTS ---
 import { useNavigate, Link } from 'react-router-dom';
-// --- END REAL REACT-ROUTER HOOKS & COMPONENTS ---
 
-// --- REUSABLE COMPONENTS ---
+// ----------------------------------------------------------------------
+// 1. GLOBAL/IN-MEMORY CACHE SIMULATION
+// This object will persist data across unmounts/mounts within the session.
+// In a production app, replace this with a proper global state manager (e.g., Redux, Zustand, or a dedicated Data Context).
+let dashboardCache = {
+    data: null,
+    isLoaded: false,
+};
+// ----------------------------------------------------------------------
 
+
+// --- REUSABLE COMPONENTS (OMITTED FOR BREVITY, NO CHANGES) ---
 const QuickActionButton = ({ icon, label, onClick, className = '' }) => (
     <button className={`btn-action-neon btn-quick-action ${className}`} onClick={onClick}>
         {icon} {label}
@@ -35,7 +39,6 @@ const DashboardCard = ({ title, icon, value, description, to, onClick, className
     );
 };
 
-// MODIFIED: Simplified to use total count and the number of unique courses with pending grades
 const PendingSubmissionsCard = ({ totalPending, uniqueCourses }) => {
     return (
         <DashboardCard 
@@ -99,8 +102,6 @@ const RecentPostsWidget = ({ posts }) => {
     );
 };
 
-
-// 💡 UPDATE: Converted button handlers to React Router Link components for better navigation
 const CourseSummaryList = ({ courses }) => {
     return (
         <section className="dashboard-section core-section course-summary-section">
@@ -119,7 +120,6 @@ const CourseSummaryList = ({ courses }) => {
                             <span className="col-duration"><FaClock /> {course.duration}</span>
                             <span className="col-students"><FaUsers /> {course.students}</span>
                             <span className="col-actions">
-                                
                                 <Link className="btn-view-course" to={`/teacher/course/${course.id}/details`}>
                                     <FaChalkboardTeacher /> Manage
                                 </Link>
@@ -133,42 +133,54 @@ const CourseSummaryList = ({ courses }) => {
         </section>
     );
 };
+// --- END REUSABLE COMPONENTS ---
+
 
 // --- TEACHER DASHBOARD MAIN COMPONENT ---
-
 const TeacherDashboard = () => {
-    const { user, name, email, userId, role, token, logout } = useAuth(); // Assume token is available
+    const { name, email, userId, role, token, logout } = useAuth();
     const navigate = useNavigate();
 
-    // 1. STATE FOR API DATA
-    const [dashboardData, setDashboardData] = useState({
-        totalCourses: 0,
-        pendingGrading: 0,
-        totalStudents: 0,
-        myCourses: [],
-        recentEnrollments: [],
-        recentPosts: [],
-        recentNotifications: [],
-    });
-    const [loading, setLoading] = useState(true);
+    // 2. STATE INITIALIZATION: Check cache first
+    const [dashboardData, setDashboardData] = useState(
+        dashboardCache.data || {
+            totalCourses: 0,
+            pendingGrading: 0,
+            totalStudents: 0,
+            myCourses: [],
+            recentEnrollments: [],
+            recentPosts: [],
+        }
+    );
+    
+    // 3. LOADING STATE: Set to true ONLY if the cache is NOT loaded
+    const [loading, setLoading] = useState(!dashboardCache.isLoaded);
     const [error, setError] = useState(null);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-    // 💡 IMPORTANT: This URL MUST match the path mounted in server.js
     const API_URL = 'http://localhost:3000/api/teacherdashboard/dashboard'; 
 
-    // 2. FETCH DATA EFFECT
+    // 4. MODIFIED FETCH DATA EFFECT
     useEffect(() => {
+        // If data is already loaded in the cache, skip the API call.
+        if (dashboardCache.isLoaded) {
+            // State is already initialized from cache, just ensure loading is false
+            setLoading(false); 
+            return;
+        }
+
         const fetchDashboardData = async () => {
             if (!token) {
-                // Not authenticated or token not yet available
                 setLoading(false);
                 setError('Authentication token missing.');
                 return;
             }
             
+            // Set loading *before* the fetch, as we know the cache is empty
+            setLoading(true); 
+
             try {
                 const response = await fetch(API_URL, {
                     method: 'GET',
@@ -185,40 +197,49 @@ const TeacherDashboard = () => {
 
                 const data = await response.json();
                 
-                // Set the entire dashboard object from the API response
-                setDashboardData(data.dashboard); 
+                // 5. SUCCESS: Update component state AND the cache
+                const fetchedData = data.dashboard;
+                setDashboardData(fetchedData); 
+                
+                dashboardCache.data = fetchedData;
+                dashboardCache.isLoaded = true; // Mark cache as loaded
+                
                 setError(null);
 
             } catch (err) {
                 console.error('API Fetch Error:', err);
                 setError(err.message || 'An error occurred while loading data.');
+                dashboardCache.isLoaded = false; // Keep it false on error
             } finally {
                 setLoading(false);
             }
         };
 
         fetchDashboardData();
+        
+        // Dependency array: only re-fetch if token changes (i.e., user logs in/out)
     }, [token]);
 
 
-    // 3. ADAPTATION: Use fetched data
     const { 
         totalCourses, 
         pendingGrading: totalPendingSubmissions, 
         totalStudents, 
-        myCourses: teacherCourses, 
-        recentEnrollments, 
-        recentPosts,
-        recentNotifications 
+        myCourses: teacherCourses = [], 
+        recentEnrollments = [], 
+        recentPosts = [], 
     } = dashboardData;
     
-    // Heuristic: Estimate unique course count for pending grades
     const pendingGradingCourseCount = totalPendingSubmissions > 0 
         ? (teacherCourses.length > 0 ? teacherCourses.length : 1) 
         : 0;
 
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-    const handleLogout = logout; 
+    const handleLogout = () => {
+        // IMPORTANT: Clear the cache on logout
+        dashboardCache = { data: null, isLoaded: false };
+        logout(); 
+    };
     
     const handleCreateCourse = () => navigate('/teacher/courses/new');
     const handleGradeSubmissions = () => navigate('/teacher/grading');
@@ -228,8 +249,7 @@ const TeacherDashboard = () => {
     
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
 
-    // --- Sub Components ---
-
+    // --- Sub Components (ProfileModal, Navbar, Sidebar - No changes needed) ---
     const ProfileModal = ({ onClose }) => (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content profile-card-neon" onClick={e => e.stopPropagation()}>
@@ -288,9 +308,6 @@ const TeacherDashboard = () => {
                 <Link to="/teacher/courses/new" className="nav-link">
                     <FaPlusCircle /> <span className="link-text">Create Course</span>
                 </Link>
-                {/* <Link to="/teacher/notifications" className="nav-link">
-                    <FaBell /> <span className="link-text">Notifications ({recentNotifications.filter(n => !n.isRead).length})</span>
-                </Link> */}
                 <Link to="/teacher/profile" className="nav-link"> 
                     <FaUserCircle /> 
                     <span className="link-text">Profile</span>
@@ -298,6 +315,7 @@ const TeacherDashboard = () => {
             </nav>
         </aside>
     );
+    // --- End Sub Components ---
 
     // --- Loading and Error State Rendering ---
     if (loading) {
@@ -316,7 +334,7 @@ const TeacherDashboard = () => {
                 <FaTimes className="error-icon" />
                 <h1>Data Fetch Error</h1>
                 <p>Could not load dashboard data: {error}</p>
-                <p>Please ensure you are logged in and the backend API is running at `/api/teacherdashboard/dashboard`.</p>
+                <p>Please ensure you are logged in and the backend API is running at **`/api/teacherdashboard/dashboard`**.</p>
             </div>
         );
     }
@@ -373,7 +391,6 @@ const TeacherDashboard = () => {
                 </div>
 
                 <div className="secondary-widgets-container">
-                    {/* CourseSummaryList now uses Link component internally */}
                     <CourseSummaryList 
                         courses={teacherCourses} 
                     />
