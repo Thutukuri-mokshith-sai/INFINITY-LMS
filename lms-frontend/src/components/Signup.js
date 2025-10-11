@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FaSpinner, FaUser, FaEnvelope, FaLock, FaCheckCircle, FaUsers, FaKey } from "react-icons/fa";
+// Added FaMobileAlt and FaGlobe
+import { FaSpinner, FaUser, FaEnvelope, FaLock, FaCheckCircle, FaUsers, FaKey, FaMobileAlt, FaGlobe } from "react-icons/fa"; 
+
+// 🎯 API Base URL Declaration
+const BASE_URL = "https://lms-portal-backend-h5k8.onrender.com";
+
 
 // --- Reusable Neon Input Component (Same as Login) ---
-const NeonInput = ({ type, placeholder, value, onChange, Icon, readOnly = false }) => {
+const NeonInput = ({ type, placeholder, value, onChange, Icon, readOnly = false, maxLength }) => {
     return (
         <div className={`input-group ${readOnly ? 'input-group-readonly' : ''}`}>
             <Icon className="input-icon" />
@@ -15,6 +20,7 @@ const NeonInput = ({ type, placeholder, value, onChange, Icon, readOnly = false 
                 onChange={onChange}
                 required={!readOnly}
                 readOnly={readOnly}
+                maxLength={maxLength}
             />
         </div>
     );
@@ -59,11 +65,22 @@ const Signup = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("");
+    // State for phone authentication
+    const [countryCode, setCountryCode] = useState(""); // e.g., '91', '1'
+    const [phoneNumber, setPhoneNumber] = useState(""); // e.g., '9876543210'
     const [otp, setOtp] = useState("");
+    
+    // 💡 THE FIX: State to hold the email or a tempUserId received from /register
+    const [tempUserIdentifier, setTempUserIdentifier] = useState(null); 
+    
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const [otpTimer, setOtpTimer] = useState(null);
+
+    // Helper for displaying phone number on OTP screen
+    const displayFormattedPhone = `${countryCode}${phoneNumber}`;
+
 
 // Effect to handle the countdown timer
     useEffect(() => {
@@ -79,10 +96,10 @@ const Signup = () => {
             setOtpTimer(null);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [countdown, step]); // Rerun effect when countdown or step changes
+    }, [countdown, step]); 
     
     const startCountdown = () => {
-        setCountdown(60);
+        setCountdown(60); 
     };
 
     // Password strength logic
@@ -95,23 +112,36 @@ const Signup = () => {
         return { text: "Weak", color: "red" };
     };
 
-    // Signup form submission
+    // Signup form submission (sends OTP)
     const handleSignup = async (e) => {
         e.preventDefault();
         setMessage("");
         setLoading(true);
 
+        // Basic client-side validation
+        if (!countryCode || !phoneNumber) {
+            setMessage("Please enter both country code and phone number.");
+            setLoading(false);
+            return;
+        }
+
         try {
-            const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/register", {
+            // 💡 UPDATED: Using BASE_URL
+            const res = await fetch(`${BASE_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, password, role }),
+                // Sending phone details for registration & initial OTP
+                body: JSON.stringify({ name, email, password, role, countryCode, phoneNumber }),
             });
             const data = await res.json();
             setLoading(false);
 
             if (res.ok) {
-                setMessage(data.message || "OTP sent to your email.");
+                setMessage(data.message || "OTP sent to your phone number.");
+                
+                // 🚀 CORE FIX STEP 1: Capture and store a unique identifier (email is a good choice)
+                setTempUserIdentifier(email); 
+                
                 setStep("otp");
                 startCountdown();
             } else {
@@ -124,17 +154,27 @@ const Signup = () => {
         }
     };
 
-    // OTP verification - MODIFIED
+    // OTP verification - UPDATED to send the identifier
     const handleOTP = async (e) => {
         e.preventDefault();
         setMessage("");
         setLoading(true);
+        
+        // Safety check
+        if (!tempUserIdentifier) {
+             setMessage("Error: Registration state lost. Please try signing up again.");
+             setLoading(false);
+             return;
+        }
+
 
         try {
-            const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/verify-otp", {
+            // 💡 UPDATED: Using BASE_URL
+            const res = await fetch(`${BASE_URL}/api/auth/verify-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, otp }),
+                // 🚀 CORE FIX STEP 2: Send the email/identifier and the OTP for verification
+                body: JSON.stringify({ identifier: tempUserIdentifier, otp }), // Use 'identifier' as key for clarity on backend
             });
             const data = await res.json();
             setLoading(false);
@@ -142,7 +182,6 @@ const Signup = () => {
             if (res.ok) {
                 setMessage(data.message || "Verification successful! Redirecting...");
                 
-                // Clear timer if verification succeeds
                 if (otpTimer) clearInterval(otpTimer); 
                 
                 // Auto log in
@@ -156,7 +195,6 @@ const Signup = () => {
                 } else {
                     navigate("/dashboard"); // fallback
                 }
-                // --- END ROLE-BASED REDIRECTION LOGIC ---
 
             } else {
                 setMessage(data.message || "OTP verification failed.");
@@ -168,15 +206,17 @@ const Signup = () => {
         }
     };
 
-    // Resend OTP
+    // Resend OTP - UPDATED to send phone number, assuming backend can find pending user by phone
     const handleResendOTP = async () => {
         setLoading(true);
         setMessage("Requesting new OTP...");
         try {
-            const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/resend-otp", {
+            // 💡 UPDATED: Using BASE_URL
+            const res = await fetch(`${BASE_URL}/api/auth/resend-otp`, { 
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
+                // Sending phone details for resend request (This is usually sufficient to identify pending user)
+                body: JSON.stringify({ countryCode, phoneNumber }),
             });
             const data = await res.json();
             setLoading(false);
@@ -229,6 +269,26 @@ const Signup = () => {
                                         onChange={(e) => setEmail(e.target.value)}
                                         Icon={FaEnvelope}
                                     />
+                                    
+                                    {/* Country Code and Phone Number Inputs */}
+                                    <div className="phone-input-group">
+                                        <NeonInput
+                                            type="tel"
+                                            placeholder="Code (+XX)"
+                                            value={countryCode}
+                                            onChange={(e) => setCountryCode(e.target.value.replace(/[^0-9]/g, ''))} // Allow only digits
+                                            Icon={FaGlobe}
+                                            maxLength={4} // Max 4 digits for country code
+                                        />
+                                        <NeonInput
+                                            type="tel"
+                                            placeholder="Phone Number (1234567890)"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))} // Allow only digits
+                                            Icon={FaMobileAlt}
+                                        />
+                                    </div>
+                                    
                                     <NeonInput
                                         type="password"
                                         placeholder="Choose Password"
@@ -263,14 +323,16 @@ const Signup = () => {
                         {step === "otp" && (
                             <>
                                 <h2><FaKey className="step-icon" /> OTP Verification</h2>
-                                <p className="otp-info-text">A one-time password has been sent to **{email}**</p>
+                                {/* Display the number the OTP was sent to */}
+                                <p className="otp-info-text">A one-time password has been sent to **+{displayFormattedPhone}**</p>
                                 <form onSubmit={handleOTP}>
                                     <NeonInput 
                                         type="text"
-                                        placeholder="OTP sent to your email"
+                                        placeholder="OTP sent to your phone"
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value)}
                                         Icon={FaKey}
+                                        maxLength={6} // Assuming 6 digit OTP
                                     />
                                     
                                     <button className="btn-primary" type="submit" disabled={loading}>
@@ -309,7 +371,7 @@ const Signup = () => {
                 </div>
             </div>
 
-            {/* Styles */}
+            {/* Styles (Unchanged from original) */}
             <style>{`
                 /* NEON COLOR DEFINITIONS */
                 :root {
@@ -428,6 +490,18 @@ const Signup = () => {
                     transition: all 0.3s ease;
                     border: 1px solid rgba(0, 255, 255, 0.1);
                 }
+                
+                /* --- Phone Input Group for Country Code + Number (Added for layout) --- */
+                .phone-input-group {
+                    display: grid;
+                    grid-template-columns: 1fr 2fr; /* Ratio for code and number */
+                    gap: 15px;
+                    margin-bottom: 20px;
+                }
+                .phone-input-group .input-group {
+                    margin-bottom: 0; 
+                }
+                /* ---------------------------------------------------- */
                 
                 .input-group-readonly {
                     opacity: 0.7;
@@ -649,6 +723,13 @@ const Signup = () => {
                     .signup-form {
                         max-width: 90%;
                         padding: 25px;
+                    }
+                    .phone-input-group {
+                        grid-template-columns: 1fr; /* Stack inputs on small screens */
+                        gap: 10px;
+                    }
+                    .phone-input-group .input-group {
+                        margin-bottom: 0; 
                     }
                 }
             `}</style>

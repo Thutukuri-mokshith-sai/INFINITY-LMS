@@ -1,264 +1,289 @@
 // controllers/authController.js
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const { MailtrapTransport } = require("mailtrap"); // <--- Import MailtrapTransport
+const bcrypt = require('bcryptjs');
+const { Vonage } = require('@vonage/server-sdk');
+const dotenv = require('dotenv');
 const db = require('../models/index');
 const User = db.User;
 const generateOTP = require('../utils/otpGenerator');
 
-// --- START Mailtrap Configuration Replacement ---
-// In a production environment, use environment variables for the token.
-// const MAILTRAP_TOKEN = process.env.MAILTRAP_TOKEN; 
-const MAILTRAP_TOKEN = process.env.Mailtrap_api_key; // Hardcoded TOKEN from your example
+dotenv.config();
 
-// Setup Nodemailer transport using Mailtrap
-const transporter = nodemailer.createTransport(
-  MailtrapTransport({
-    token: MAILTRAP_TOKEN,
-  })
-);
+// --- START Vonage Configuration ---
+const VONAGE_API_KEY = process.env.VONAGE_API_KEY || '9278200e';
+const VONAGE_API_SECRET = process.env.VONAGE_API_SECRET || 'zb6LV8qp88qsPjaQ';
+const VONAGE_SENDER_ID = process.env.VONAGE_SENDER_ID || 'VonageAPI';
 
-// Define a default sender address for Mailtrap
-const SENDER_EMAIL = "hello@demomailtrap.co"; // Replace with your verified sender email in Mailtrap
-// --- END Mailtrap Configuration Replacement ---
+const vonage = new Vonage({
+    apiKey: VONAGE_API_KEY,
+    apiSecret: VONAGE_API_SECRET,
+});
 
-
-// Helper functions for Email and Token
-const sendEmail = async (user, subject, htmlContent) => {
-    const otp = generateOTP();
-    const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    user.otp = otp;
-    user.otpExpires = new Date(otpExpires);
-    await user.save();
-
-    const mailOptions = {
-        from: SENDER_EMAIL, // <--- Use the Mailtrap sender address
-        to: user.email,
-        subject: subject,
-        html: htmlContent.replace('{{otp}}', otp),
-    };
-
-    await transporter.sendMail(mailOptions);
-    return otp;
+const formatPhoneNumber = (countryCode, phoneNumber) => {
+    const rawNumber = phoneNumber.replace(/^\+/, '');
+    const code = countryCode.replace(/^\+/, '');
+    if (rawNumber.startsWith(code)) return rawNumber;
+    return `${code}${rawNumber}`;
 };
+// --- END Vonage Configuration ---
 
-const sendVerificationEmail = async (user) => {
-    const subject = 'LMS Account Verification OTP';
-    const htmlContent = `<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 450px; margin: 20px auto; text-align: center;">
+const sendVerificationSMS = async (user, purpose = 'Verification') => {
+    const otp = generateOTP();
+    const otpExpires = Date.now() + 10 * 60 * 1000;
 
-    <h2 style="color: #333; font-weight: 300; margin-bottom: 30px;">
-        One-Time Passcode
-    </h2>
+    user.otp = otp;
+    user.otpExpires = new Date(otpExpires);
+    await user.save();
 
-    <p style="color: #555; font-size: 16px; margin-bottom: 30px;">
-        Please enter this code to verify your account <strong style="color: #e67e22;"></strong>.
-    </p>
-    
-    <div style="background-color: #e67e22; /* Orange/Gold Accent */ border-radius: 6px; padding: 25px 20px; margin: 20px 0; box-shadow: 0 6px 15px rgba(230, 126, 34, 0.4);">
-        <p style="color: #fff; font-size: 18px; font-weight: bold; margin-top: 0;">VERIFICATION CODE</p>
-        <h1 style="color: #fff; font-size: 44px; font-weight: 900; margin: 0; letter-spacing: 8px;">
-            {{otp}}
-        </h1>
-    </div>
-    <p style="color: #888; font-size: 14px; margin-top: 30px;">
-        This code expires in 10 minutes.
-    </p>
-</div>`;
-    return sendEmail(user, subject, htmlContent);
-};
+    const fullPhoneNumber = formatPhoneNumber(user.countryCode, user.phoneNumber);
+    const textMessage = `Your LMS ${purpose} Code is: ${otp}. It expires in 10 minutes.`;
 
-const sendPasswordResetEmail = async (user) => {
-    const subject = 'LMS Password Reset Verification Code';
-    const htmlContent = `
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; padding: 30px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-  
-  <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #FF5733; font-size: 28px; margin-bottom: 5px;">Password Reset</h1>
-    <p style="color: #555; font-size: 16px;">You requested a password reset. Use the code below to reset your password.</p>
-  </div>
+    try {
+        const response = await vonage.sms.send({
+            to: fullPhoneNumber,
+            from: VONAGE_SENDER_ID,
+            text: textMessage
+        });
 
-  <div style="text-align: center; background: linear-gradient(90deg, #FF5733, #FF8D1A); padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-    <h2 style="color: #fff; font-size: 36px; letter-spacing: 4px; margin: 0;">{{otp}}</h2>
-  </div>
+        if (response.messages[0].status === '0') {
+            console.log('✅ SMS sent successfully:', response.messages[0]);
+        } else {
+            console.error(`❌ Vonage SMS Error (${response.messages[0].status}):`, response.messages[0]['error-text']);
+            throw new Error(`SMS delivery failed: ${response.messages[0]['error-text']}`);
+        }
 
-  <p style="text-align: center; color: #555; font-size: 14px;">This code is valid for <strong>10 minutes</strong>. Please ignore this email if you did not request a reset.</p>
-
-  
-  <p style="text-align: center; color: #999; font-size: 12px; margin-top: 40px;">If you did not request this, no action is required.</p>
-</div>
-`;
-
-    return sendEmail(user, subject, htmlContent);
+        return otp;
+    } catch (error) {
+        console.error('❌ Failed to send SMS:', error);
+        throw new Error('Could not send verification SMS.');
+    }
 };
 
 const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
+    return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+    });
 };
 
+// ----------------------------------------------------
 // 1. Register/Signup Logic
+// ----------------------------------------------------
 exports.registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ message: 'Please enter all fields.' });
-  }
-  const validRoles = ['Student', 'Teacher', 'Super Admin'];
-  if (!validRoles.includes(role)) {
-    return res.status(400).json({ message: 'Invalid role specified.' });
-  }
+    console.log(req.body);
+    const { name, email, password, role, countryCode, phoneNumber } = req.body;
 
-  try {
-    let user = await User.findOne({ where: { email } });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists.' });
-    }
+    if (!name || !email || !password || !role || !countryCode || !phoneNumber) {
+        return res.status(400).json({ message: 'Please enter all required fields: name, email, password, role, country code, and phone number.' });
+    }
+    const validRoles = ['Student', 'Teacher', 'Super Admin'];
+    if (!validRoles.includes(role)) {
+        return res.status(400).json({ message: 'Invalid role specified.' });
+    }
 
-    user = await User.create({ name, email, password, role, isVerified: false });
-    await sendVerificationEmail(user);
+    try {
+        // Check if user already exists by email
+        let user = await User.findOne({ where: { email } });
+        if (user) {
+            return res.status(400).json({ message: 'User with this email already exists.' });
+        }
 
-    res.status(201).json({
-      message: 'Registration successful. OTP sent to your email for verification.',
-      userId: user.id,
-      email: user.email
-    });
+        // Check if user already exists by phone number and country code
+        user = await User.findOne({ where: { phoneNumber, countryCode } });
+        if (user) {
+            return res.status(400).json({ message: 'User with this phone number already exists.' });
+        }
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error during registration.' });
-  }
+        // ✅ Save raw phone number and countryCode
+        user = await User.create({ 
+            name, 
+            email, 
+            password, 
+            role, 
+            countryCode, 
+            phoneNumber, 
+            isVerified: false 
+        });
+
+        await sendVerificationSMS(user, 'Account Verification');
+
+        res.status(201).json({
+            message: 'Registration successful. OTP sent to your phone number for verification.',
+            userId: user.id,
+            fullPhoneNumber: formatPhoneNumber(user.countryCode, user.phoneNumber),
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: `Server error during registration: ${error.message}` });
+    }
 };
 
+// ----------------------------------------------------
 // 2. OTP Verification Logic
+// ----------------------------------------------------
 exports.verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
+    const { identifier, otp } = req.body; 
 
-  try {
-    const user = await User.findOne({ where: { email } });
+    if (!identifier || !otp) {
+        return res.status(400).json({ message: 'Please provide identifier (email) and OTP.' });
+    }
 
-    if (!user || user.isVerified) {
-      return res.status(400).json({ message: 'User not found or already verified.' });
-    }
+    try {
+        const user = await User.findOne({ where: { email: identifier } }); 
 
-    if (user.otp !== otp || user.otpExpires < new Date()) {
-      return res.status(400).json({ message: 'Invalid or expired OTP.' });
-    }
+        if (!user) {
+            return res.status(404).json({ message: 'Verification failed: User not found or invalid request.' });
+        }
 
-    user.isVerified = true;
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save();
+        if (user.isVerified) {
+            return res.status(200).json({ message: 'Account is already verified. Proceed to login.', isVerified: true });
+        }
 
-    const token = generateToken(user.id, user.role);
+        if (user.otpExpires < new Date()) {
+            return res.status(400).json({ message: 'Invalid or expired OTP. Please request a new one.' });
+        }
 
-    res.status(200).json({
-      message: 'Account successfully verified and logged in.',
-      token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-    });
+        if (user.otp !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP provided.' });
+        }
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error during OTP verification.' });
-  }
+        user.isVerified = true;
+        user.otp = null;
+        user.otpExpires = null;
+        await user.save();
+
+        const token = generateToken(user.id, user.role);
+
+        res.status(200).json({
+            message: 'Account successfully verified and logged in.',
+            token,
+            user: { id: user.id, name: user.name, email: user.email, role: user.role, phoneNumber: user.phoneNumber },
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error during OTP verification.' });
+    }
 };
 
-
+// ----------------------------------------------------
 // 3. Login Logic
+// ----------------------------------------------------
 exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-  try {
-    const user = await User.findOne({ where: { email } });
+    if (!identifier || !password) {
+        return res.status(400).json({ message: 'Please provide an email/phone number and password.' });
+    }
 
-    if (!user) {
-      return res.status(404).json({ message: 'Invalid credentials.' });
-    }
+    try {
+        const isEmail = identifier.includes('@');
+        let user;
+        const searchIdentifier = identifier.replace(/^\+/, '');
 
-    if (!user.isVerified) {
-      await sendVerificationEmail(user); 
-      return res.status(403).json({ 
-        message: 'Account not verified. A new verification OTP has been sent to your email.' 
-      });
-    }
+        if (isEmail) {
+            user = await User.findOne({ where: { email: searchIdentifier } });
+        } else {
+            user = await User.findOne({ where: { phoneNumber: searchIdentifier } });
+        }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
-    }
+        if (!user) {
+            return res.status(404).json({ message: 'Invalid credentials.' });
+        }
 
-    const token = generateToken(user.id, user.role);
+        if (!user.isVerified) {
+            await sendVerificationSMS(user, 'Account Verification'); 
+            return res.status(403).json({ 
+                message: 'Account not verified. A new verification OTP has been sent to your phone number.',
+                requiresOTP: true 
+            });
+        }
 
-    res.status(200).json({
-      message: 'Login successful.',
-      token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-    });
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error during login.' });
-  }
+        const token = generateToken(user.id, user.role);
+
+        res.status(200).json({
+            message: 'Login successful.',
+            token,
+            user: { id: user.id, name: user.name, email: user.email, role: user.role, phoneNumber: user.phoneNumber },
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error during login.' });
+    }
 };
+
+// ----------------------------------------------------
 // 4. Forgot Password (Request Reset) Logic
+// ----------------------------------------------------
 exports.forgotPassword = async (req, res) => {
-  const { email } = req.body;
+    const { phoneNumber, countryCode } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ message: 'Please provide your email.' });
-  }
+    if (!phoneNumber || !countryCode) {
+        return res.status(400).json({ message: 'Please provide your country code and phone number.' });
+    }
 
-  try {
-    const user = await User.findOne({ where: { email } });
+    const searchNumber = phoneNumber.replace(/^\+/, '');
 
-    if (!user) {
-      // Return a generic message for security purposes
-      return res.status(404).json({ message: 'User with this email does not exist.' });
-    }
+    try {
+        const user = await User.findOne({ where: { phoneNumber: searchNumber, countryCode } });
 
-    // Send password reset email
-    await sendPasswordResetEmail(user);
+        if (!user) {
+            return res.status(404).json({ message: 'User with this phone number does not exist.' });
+        }
 
-    res.status(200).json({
-      message: 'Password reset instructions have been sent to your email.',
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error during password reset request.' });
-  }
+        await sendVerificationSMS(user, 'Password Reset');
+
+        res.status(200).json({
+            message: 'Password reset code has been sent to your phone number via SMS.',
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: `Server error during password reset request: ${error.message}` });
+    }
 };
 
+// ----------------------------------------------------
 // 5. Reset Password Logic (using OTP)
+// ----------------------------------------------------
 exports.resetPassword = async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+    const { phoneNumber, countryCode, otp, newPassword } = req.body;
 
-  if (!email || !otp || !newPassword) {
-    return res.status(400).json({ message: 'Please provide email, OTP, and new password.' });
-  }
+    if (!phoneNumber || !countryCode || !otp || !newPassword) {
+        return res.status(400).json({ message: 'Please provide phone number, country code, OTP, and new password.' });
+    }
 
-  try {
-    const user = await User.findOne({ where: { email } });
+    const searchNumber = phoneNumber.replace(/^\+/, '');
 
-    if (!user) {
-      return res.status(404).json({ message: 'Invalid request: User not found.' });
-    }
+    try {
+        const user = await User.findOne({ where: { phoneNumber: searchNumber, countryCode } });
 
-    if (user.otp !== otp || user.otpExpires < new Date()) {
-      return res.status(400).json({ message: 'Invalid or expired password reset OTP.' });
-    }
+        if (!user) {
+            return res.status(404).json({ message: 'Invalid request: User not found.' });
+        }
 
-    // Update password (Model hook handles hashing)
-    user.password = newPassword;
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save();
+        if (user.otpExpires < new Date()) {
+            return res.status(400).json({ message: 'Invalid or expired password reset OTP.' });
+        }
 
-    res.status(200).json({
-      message: 'Password has been successfully reset. You can now log in with your new password.',
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error during password reset.' });
-  }
+        if (user.otp !== otp) {
+            return res.status(400).json({ message: 'Invalid password reset OTP.' });
+        }
+
+        user.password = newPassword;
+        user.otp = null;
+        user.otpExpires = null;
+        await user.save();
+
+        res.status(200).json({
+            message: 'Password has been successfully reset. You can now log in.',
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error during password reset.' });
+    }
 };

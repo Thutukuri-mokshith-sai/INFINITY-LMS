@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
+    "@vonage/server-sdk": "^3.25.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

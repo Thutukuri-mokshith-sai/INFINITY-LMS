@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FaSpinner, FaEnvelope, FaLock } from "react-icons/fa"; // Added icons
+// FaUserCircle is used for the generic identifier (Email or Phone)
+import { FaSpinner, FaLock, FaUserCircle } from "react-icons/fa"; 
 
 // --- Reusable Neon Input Component ---
 const NeonInput = ({ type, placeholder, value, onChange, Icon }) => {
@@ -24,11 +25,12 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
+  // STATE CHANGE: Renamed 'email' to 'identifier' to allow login via email or phone
+  const [identifier, setIdentifier] = useState(""); 
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 }); // State for mouse tracking
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 }); 
 
   // Mouse move handler for the aurora effect
   const handleMouseMove = (e) => {
@@ -38,41 +40,43 @@ const Login = () => {
       y: e.clientY - rect.top,
     });
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMessage("");
-  setLoading(true);
 
-  try {
-    const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
 
-    const data = await res.json();
-    setLoading(false);
+    try {
+      const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // LOGIC CHANGE: Send 'identifier' instead of 'email'
+        body: JSON.stringify({ identifier, password }), 
+      });
 
-    if (res.ok) {
-      login(data.token, data.user);
+      const data = await res.json();
+      setLoading(false);
 
-      // Redirect based on role
-      if (data.user.role === "Teacher") {
-        navigate("/Teacher");
-      } else if (data.user.role === "Student") {
-        navigate("/Student");
+      if (res.ok) {
+        login(data.token, data.user);
+
+        // Redirect based on role
+        if (data.user.role === "Teacher") {
+          navigate("/Teacher");
+        } else if (data.user.role === "Student") {
+          navigate("/Student");
+        } else {
+          navigate("/dashboard"); // fallback
+        }
       } else {
-        navigate("/dashboard"); // fallback
+        setMessage(data.message || "Login failed");
       }
-    } else {
-      setMessage(data.message || "Login failed");
+    } catch (err) {
+      console.error(err);
+      setMessage("Server error. Try again later.");
+      setLoading(false);
     }
-  } catch (err) {
-    console.error(err);
-    setMessage("Server error. Try again later.");
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <>
@@ -104,11 +108,13 @@ const handleSubmit = async (e) => {
             <h2>LMS Login</h2>
             <form onSubmit={handleSubmit}>
               <NeonInput
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                Icon={FaEnvelope}
+                // Input type changed to 'text' to accommodate phone number
+                type="text" 
+                placeholder="Email or Phone Number"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)} 
+                // Icon changed to a generic user icon
+                Icon={FaUserCircle} 
               />
               <NeonInput
                 type="password"

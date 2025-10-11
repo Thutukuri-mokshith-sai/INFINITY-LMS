@@ -19,6 +19,20 @@ const User = sequelize.define('User', {
     unique: true,
     validate: { isEmail: true },
   },
+  // --- New Fields Added Below ---
+  countryCode: {
+    type: DataTypes.STRING(5), // e.g., +1, +44. Limiting length.
+    allowNull: true, // Making it optional, adjust as needed
+  },
+  phoneNumber: {
+    type: DataTypes.STRING,
+    allowNull: true, // Making it optional, adjust as needed
+    unique: true, // Assuming phone numbers should be unique
+    validate: {
+      is: /^[0-9]+$/, // Simple check for digits only (adjust regex for full validation)
+    },
+  },
+  // --- End of New Fields ---
   password: {
     type: DataTypes.STRING,
     allowNull: false,
