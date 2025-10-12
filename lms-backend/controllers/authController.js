@@ -10,7 +10,7 @@ const sgMail = require('@sendgrid/mail');
 dotenv.config();
 
 // --- START SendGrid Configuration ---
-sgMail.setApiKey(process.env.SENDGRID_API_KEY );
+sgMail.setApiKey('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');
 
 const SENDER_EMAIL = process.env.SENDER_EMAIL;
 const SENDER_NAME = 'INFINITY SQUAD LMS';
