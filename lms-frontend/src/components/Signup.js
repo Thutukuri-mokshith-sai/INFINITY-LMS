@@ -137,14 +137,10 @@ const Signup = () => {
             setLoading(false);
 
             if (res.ok) {
-<<<<<<< HEAD
-                setMessage(data.message || "OTP sent to your phone number.");
-=======
                 // NOTE: The backend sends OTP to email, but the message in the UI still refers to phone.
                 // It should ideally say "OTP sent to your email". Keeping the message as is for now 
                 // but the resend logic below uses email, matching the backend.
                 setMessage(data.message || "OTP sent to your email for verification.");
->>>>>>> 1fb71020 (Mail functionality updated)
                 
                 // 🚀 CORE FIX STEP 1: Capture and store a unique identifier (email is a good choice)
                 setTempUserIdentifier(email); 
@@ -213,19 +209,6 @@ const Signup = () => {
         }
     };
 
-<<<<<<< HEAD
-    // Resend OTP - UPDATED to send phone number, assuming backend can find pending user by phone
-    const handleResendOTP = async () => {
-        setLoading(true);
-        setMessage("Requesting new OTP...");
-        try {
-            // 💡 UPDATED: Using BASE_URL
-            const res = await fetch(`${BASE_URL}/api/auth/resend-otp`, { 
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                // Sending phone details for resend request (This is usually sufficient to identify pending user)
-                body: JSON.stringify({ countryCode, phoneNumber }),
-=======
     // Resend OTP - **CRITICAL UPDATE** to send the email identifier
     const handleResendOTP = async () => {
         setLoading(true);
@@ -244,17 +227,12 @@ const Signup = () => {
                 headers: { "Content-Type": "application/json" },
                 // 🔑 Core change: Send the email as the identifier for the backend resend logic
                 body: JSON.stringify({ email: tempUserIdentifier, purpose: 'Account Verification' }),
->>>>>>> 1fb71020 (Mail functionality updated)
             });
             const data = await res.json();
             setLoading(false);
 
             if (res.ok) {
-<<<<<<< HEAD
-                setMessage(data.message || "New OTP sent!");
-=======
                 setMessage(data.message || "New OTP sent to your email!");
->>>>>>> 1fb71020 (Mail functionality updated)
                 startCountdown();
             } else {
                 setMessage(data.message || "Failed to resend OTP.");
@@ -355,21 +333,12 @@ const Signup = () => {
                         {step === "otp" && (
                             <>
                                 <h2><FaKey className="step-icon" /> OTP Verification</h2>
-<<<<<<< HEAD
-                                {/* Display the number the OTP was sent to */}
-                                <p className="otp-info-text">A one-time password has been sent to **+{displayFormattedPhone}**</p>
-                                <form onSubmit={handleOTP}>
-                                    <NeonInput 
-                                        type="text"
-                                        placeholder="OTP sent to your phone"
-=======
                                 {/* Display the email/identifier the OTP was sent to */}
                                 <p className="otp-info-text">A one-time password has been sent to **{tempUserIdentifier}**</p>
                                 <form onSubmit={handleOTP}>
                                     <NeonInput 
                                         type="text"
                                         placeholder="Enter OTP"
->>>>>>> 1fb71020 (Mail functionality updated)
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value)}
                                         Icon={FaKey}
@@ -412,11 +381,7 @@ const Signup = () => {
                 </div>
             </div>
 
-<<<<<<< HEAD
-            {/* Styles (Unchanged from original) */}
-=======
             {/* Styles (Updated for the Phone Input Group layout) */}
->>>>>>> 1fb71020 (Mail functionality updated)
             <style>{`
                 /* NEON COLOR DEFINITIONS */
                 :root {
@@ -530,11 +495,7 @@ const Signup = () => {
                     background: rgba(255, 255, 255, 0.05);
                     border-radius: 12px;
                     padding: 12px 15px; 
-<<<<<<< HEAD
-                    margin-bottom: 20px;
-=======
                     margin-bottom: 20px; /* Keep consistent margin bottom for single inputs */
->>>>>>> 1fb71020 (Mail functionality updated)
                     box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
                     transition: all 0.3s ease;
                     border: 1px solid rgba(0, 255, 255, 0.1);
@@ -545,17 +506,10 @@ const Signup = () => {
                     display: grid;
                     grid-template-columns: 1fr 2fr; /* Ratio for code and number */
                     gap: 15px;
-<<<<<<< HEAD
-                    margin-bottom: 20px;
-                }
-                .phone-input-group .input-group {
-                    margin-bottom: 0; 
-=======
                     margin-bottom: 20px; /* New: Added margin for the entire group */
                 }
                 .phone-input-group .input-group {
                     margin-bottom: 0; /* Remove margin from individual inputs in the grid */
->>>>>>> 1fb71020 (Mail functionality updated)
                 }
                 /* ---------------------------------------------------- */
                 
@@ -607,10 +561,7 @@ const Signup = () => {
                     color: var(--light-text);
                     padding-right: 10px;
                     cursor: pointer;
-<<<<<<< HEAD
-=======
                     line-height: 1.5; /* Added for better vertical alignment */
->>>>>>> 1fb71020 (Mail functionality updated)
                 }
                 .role-select option {
                     color: var(--dark-bg); /* Dark background text */
@@ -787,10 +738,7 @@ const Signup = () => {
                     .phone-input-group {
                         grid-template-columns: 1fr; /* Stack inputs on small screens */
                         gap: 10px;
-<<<<<<< HEAD
-=======
                         margin-bottom: 20px; /* Keep margin bottom for the stacked group */
->>>>>>> 1fb71020 (Mail functionality updated)
                     }
                     .phone-input-group .input-group {
                         margin-bottom: 0; 
