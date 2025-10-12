@@ -1,9 +1,17 @@
 // ForgotPassword.js
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaSpinner, FaPhone, FaLock, FaKey, FaQuestionCircle } from "react-icons/fa";
 
 // Reusable Neon Input Component (No change)
+=======
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { FaSpinner, FaEnvelope, FaLock, FaKey, FaQuestionCircle } from "react-icons/fa";
+
+// Reusable Neon Input Component (FaPhone changed to FaEnvelope for email)
+>>>>>>> 1fb71020 (Mail functionality updated)
 const NeonInput = ({ type, placeholder, value, onChange, Icon, readOnly = false }) => (
     <div className={`input-group ${readOnly ? 'input-group-readonly' : ''}`}>
         <Icon className="input-icon" />
@@ -26,7 +34,11 @@ const PasswordStrengthMeter = ({ strength }) => {
         color = 'orange';
         width = '66.6%';
     } else if (strength.text === 'Strong') {
+<<<<<<< HEAD
         color = '#10b981'; 
+=======
+        color = '#10b981';
+>>>>>>> 1fb71020 (Mail functionality updated)
         width = '100%';
     }
 
@@ -45,12 +57,23 @@ const PasswordStrengthMeter = ({ strength }) => {
     );
 };
 
+<<<<<<< HEAD
 const ForgotPassword = () => {
     const navigate = useNavigate();
 
     const [step, setStep] = useState("request");
     // State variable explicitly named 'phoneNumber' for clarity
     const [phoneNumber, setPhoneNumber] = useState(""); 
+=======
+// --- Custom Hook for Password Recovery Logic (Updated for Email) ---
+
+const BASE_URL = "https://lms-portal-backend-h5k8.onrender.com/api/auth";
+
+const usePasswordRecovery = (navigate) => {
+    const [step, setStep] = useState("request");
+    // 💡 CHANGED from 'phoneNumber' to 'email'
+    const [email, setEmail] = useState(""); 
+>>>>>>> 1fb71020 (Mail functionality updated)
     const [otp, setOtp] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [message, setMessage] = useState("");
@@ -58,7 +81,11 @@ const ForgotPassword = () => {
     const [countdown, setCountdown] = useState(0);
     const otpTimerRef = useRef(null);
 
+<<<<<<< HEAD
     // --- useEffect for Countdown Timer (No change) ---
+=======
+    // Countdown Timer Effect (No change)
+>>>>>>> 1fb71020 (Mail functionality updated)
     useEffect(() => {
         if (countdown > 0) {
             if (otpTimerRef.current) clearInterval(otpTimerRef.current);
@@ -74,48 +101,80 @@ const ForgotPassword = () => {
             clearInterval(otpTimerRef.current);
             otpTimerRef.current = null;
         }
+<<<<<<< HEAD
     }, [countdown]); // Removed 'step' from dependency array as it's not strictly needed here
 
     const startCountdown = () => setCountdown(60);
 
     // --- Password Strength Logic (No change) ---
     const getPasswordStrength = () => {
+=======
+    }, [countdown]);
+
+    const startCountdown = useCallback(() => setCountdown(60), []);
+
+    // Password Strength Logic (No change)
+    const getPasswordStrength = useCallback(() => {
+>>>>>>> 1fb71020 (Mail functionality updated)
         if (newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[\W_]/.test(newPassword)) {
             return { text: "Strong", color: "#10b981" }; 
         } else if (newPassword.length >= 6 && (/[A-Z]/.test(newPassword) || /[0-9]/.test(newPassword))) {
             return { text: "Medium", color: "orange" };
         }
         return { text: "Weak", color: "red" };
+<<<<<<< HEAD
     };
 
     // ------------------------------------------------------------------
     // 🔥 ACTUAL API CALL HANDLERS (Updated to use 'phoneNumber' state)
     // ------------------------------------------------------------------
 
+=======
+    }, [newPassword]);
+
+
+    // API Handlers
+>>>>>>> 1fb71020 (Mail functionality updated)
     const handleRequestOTP = async (e) => {
         e.preventDefault();
         setMessage("");
         setLoading(true);
 
+<<<<<<< HEAD
         // Simple validation check before API call
         if (!phoneNumber) {
             setLoading(false);
             setMessage("Please enter your registered phone number.");
+=======
+        // 💡 Validation check updated for email
+        if (!email || !email.includes('@')) {
+            setLoading(false);
+            setMessage("Please enter a valid email address.");
+>>>>>>> 1fb71020 (Mail functionality updated)
             return;
         }
 
         try {
+<<<<<<< HEAD
             // Endpoint to request OTP: /forgot-password
             const res = await fetch("https://lms-portal-backend-h5k8.onrender.com/api/auth/forgot-password", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ phoneNumber }), // Use phoneNumber
+=======
+            // Backend endpoint: /forgot-password expects { email }
+            const res = await fetch(`${BASE_URL}/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }), // 💡 Use email
+>>>>>>> 1fb71020 (Mail functionality updated)
             });
 
             const data = await res.json();
             setLoading(false);
 
             if (res.ok) {
+<<<<<<< HEAD
                 // Success: Move to OTP step and start the countdown
                 setMessage(data.message || "OTP sent to your phone.");
                 setStep("otp");
@@ -123,6 +182,14 @@ const ForgotPassword = () => {
             } else {
                 // Failure: Display error message from the backend
                 setMessage(data.message || "Error requesting OTP. Please check the phone number.");
+=======
+                setMessage(data.message || "Password reset code sent to your email.");
+                setStep("otp");
+                startCountdown();
+            } else {
+                // The backend returns 404 for 'User with this email does not exist.'
+                setMessage(data.message || "Error requesting code. Please check your email address.");
+>>>>>>> 1fb71020 (Mail functionality updated)
             }
         } catch (err) {
             console.error(err);
@@ -137,18 +204,28 @@ const ForgotPassword = () => {
         setLoading(true);
 
         const strength = getPasswordStrength();
+<<<<<<< HEAD
         if (strength.text !== "Strong") { // Check for Strong password requirement
+=======
+        if (strength.text !== "Strong") {
+>>>>>>> 1fb71020 (Mail functionality updated)
             setLoading(false);
             setMessage("For security, the new password must be Strong (8+ chars, uppercase, number, symbol).");
             return;
         }
+<<<<<<< HEAD
         
         // Also check if OTP is entered
         if (!otp || otp.length < 6) {
+=======
+
+        if (!otp || otp.length !== 6) { // Assuming a 6-digit OTP
+>>>>>>> 1fb71020 (Mail functionality updated)
             setLoading(false);
             setMessage("Please enter the 6-digit OTP.");
             return;
         }
+<<<<<<< HEAD
         
         try {
             // Endpoint to verify OTP and reset password: /reset-password
@@ -157,13 +234,26 @@ const ForgotPassword = () => {
                 headers: { "Content-Type": "application/json" },
                 // Pass all three required fields
                 body: JSON.stringify({ phoneNumber, otp, newPassword }), 
+=======
+
+        try {
+            // Backend endpoint: /reset-password expects { email, otp, newPassword }
+            const res = await fetch(`${BASE_URL}/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                // 💡 Pass email, otp, newPassword
+                body: JSON.stringify({ email, otp, newPassword }), 
+>>>>>>> 1fb71020 (Mail functionality updated)
             });
 
             const data = await res.json();
             setLoading(false);
 
             if (res.ok) {
+<<<<<<< HEAD
                 // Success: Password reset, redirect to login
+=======
+>>>>>>> 1fb71020 (Mail functionality updated)
                 setMessage(data.message || "Password successfully reset! Redirecting...");
                 if (otpTimerRef.current) clearInterval(otpTimerRef.current);
                 setTimeout(() => navigate("/login"), 2000);
@@ -178,6 +268,7 @@ const ForgotPassword = () => {
         }
     };
 
+<<<<<<< HEAD
     // 🔥 Resend logic uses the initial request OTP endpoint.
     const handleResendOTP = async () => {
         setLoading(true);
@@ -188,16 +279,37 @@ const ForgotPassword = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ phoneNumber }), // Resend uses the existing phone number
+=======
+    // Resend logic uses the /forgot-password endpoint or the new /resendOTP endpoint
+    // Since /forgotPassword seems to send a new code in the backend, we will use it for simplicity.
+    const handleResendOTP = async () => {
+        setLoading(true);
+        setMessage("Requesting new code...");
+        
+        try {
+            // Using the /forgot-password endpoint as it sends a fresh code
+            const res = await fetch(`${BASE_URL}/forgot-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }), // 💡 Resend uses the existing email
+>>>>>>> 1fb71020 (Mail functionality updated)
             });
 
             const data = await res.json();
             setLoading(false);
 
             if (res.ok) {
+<<<<<<< HEAD
                 setMessage(data.message || "New OTP sent!");
                 startCountdown(); // Restart the countdown timer
             } else {
                 setMessage(data.message || "Failed to resend OTP.");
+=======
+                setMessage(data.message || "New code sent!");
+                startCountdown(); // Restart the countdown timer
+            } else {
+                setMessage(data.message || "Failed to resend code.");
+>>>>>>> 1fb71020 (Mail functionality updated)
             }
         } catch (err) {
             console.error(err);
@@ -206,6 +318,7 @@ const ForgotPassword = () => {
         }
     };
 
+<<<<<<< HEAD
     // ------------------------------------------------------------------
     // 🔥 RENDER JSX (No functional changes, just ensuring variable names match)
     // ------------------------------------------------------------------
@@ -214,6 +327,53 @@ const ForgotPassword = () => {
         <div className="forgot-container">
             {/* CSS STYLES (No Change) */}
             <style>{`
+=======
+    return {
+        step,
+        email, // 💡 Exposed email
+        setEmail, // 💡 Exposed setEmail
+        otp,
+        setOtp,
+        newPassword,
+        setNewPassword,
+        message,
+        loading,
+        countdown,
+        getPasswordStrength,
+        handleRequestOTP,
+        handleOTPVerification,
+        handleResendOTP,
+    };
+};
+
+// --- Main ForgotPassword Component ---
+
+const ForgotPassword = () => {
+    const navigate = useNavigate();
+    
+    // Use the custom hook to access all state and logic
+    const {
+        step,
+        email,
+        setEmail,
+        otp,
+        setOtp,
+        newPassword,
+        setNewPassword,
+        message,
+        loading,
+        countdown,
+        getPasswordStrength,
+        handleRequestOTP,
+        handleOTPVerification,
+        handleResendOTP,
+    } = usePasswordRecovery(navigate);
+
+    return (
+        <div className="forgot-container">
+            {/* CSS STYLES (Unchanged) */}
+            <style>{`/* ... (CSS STYLES REMAINS UNCHANGED) ... */
+>>>>>>> 1fb71020 (Mail functionality updated)
                 :root {
                     --neon-color: #00FFFF; /* Electric Blue */
                     --dark-bg: #022c22;
@@ -544,12 +704,19 @@ const ForgotPassword = () => {
 
             <div className="forgot-left">
                 <div className="company-logo">
+<<<<<<< HEAD
                     {/* Assuming you have a logo.png in your public directory */}
+=======
+>>>>>>> 1fb71020 (Mail functionality updated)
                     <img src="/logo.png" alt="Company Logo" /> 
                 </div>
                 <h1>Account Recovery</h1>
                 <p>
+<<<<<<< HEAD
                     Recover your learning portal account with a secure verification process using your registered phone number.
+=======
+                    Recover your learning portal account with a secure verification process using your registered **email address**.
+>>>>>>> 1fb71020 (Mail functionality updated)
                 </p>
                 <div className="left-panel-glow"></div>
             </div>
@@ -557,6 +724,7 @@ const ForgotPassword = () => {
             <div className="forgot-right">
                 <div className="forgot-form">
                     
+<<<<<<< HEAD
                     {/* STEP 1: Request OTP */}
                     {step === "request" && (
                         <>
@@ -571,6 +739,33 @@ const ForgotPassword = () => {
                                     value={phoneNumber} 
                                     onChange={(e) => setPhoneNumber(e.target.value)} 
                                     Icon={FaPhone}
+=======
+                    {/* Message Box */}
+                    {message && (
+                        <p className="message-box" style={{
+                            color: /success|sent|reset/i.test(message) ? "var(--neon-color)" : "red",
+                            border: /success|sent|reset/i.test(message) ? "1px solid var(--neon-color)" : "1px solid red",
+                            boxShadow: /success|sent|reset/i.test(message) ? "var(--neon-shadow-small)" : "0 0 5px red"
+                        }}>
+                            {message}
+                        </p>
+                    )}
+
+                    {/* STEP 1: Request OTP */}
+                    {step === "request" && (
+                        <>
+                            <h2><FaQuestionCircle className="step-icon" /> Email Recovery</h2>
+                            <p className="info-text">
+                                Enter your **registered email address** to receive a One-Time Password (OTP).
+                            </p>
+                            <form onSubmit={handleRequestOTP}>
+                                <NeonInput
+                                    type="email" // 💡 Changed type to email
+                                    placeholder="Enter your registered email address"
+                                    value={email} // 💡 Use email state
+                                    onChange={(e) => setEmail(e.target.value)} // 💡 Use setEmail
+                                    Icon={FaEnvelope} // 💡 Changed icon to FaEnvelope
+>>>>>>> 1fb71020 (Mail functionality updated)
                                 />
                                 <button className="btn-primary" type="submit" disabled={loading}>
                                     {loading ? <FaSpinner className="spinner" /> : "Send Code"}
@@ -584,6 +779,7 @@ const ForgotPassword = () => {
                         <>
                             <h2><FaKey className="step-icon" /> Reset Password</h2>
                             <p className="info-text">
+<<<<<<< HEAD
                                 Code sent to **{phoneNumber}**. Enter the code and set a new password.
                             </p>
                             <form onSubmit={handleOTPVerification}>
@@ -593,6 +789,17 @@ const ForgotPassword = () => {
                                     value={phoneNumber} 
                                     placeholder="Registered Phone"
                                     Icon={FaPhone} 
+=======
+                                Code sent to **{email}**. Enter the code and set a new password.
+                            </p>
+                            <form onSubmit={handleOTPVerification}>
+                                {/* Read-only email input */}
+                                <NeonInput 
+                                    type="email" // 💡 Changed type to email
+                                    value={email} // 💡 Use email state
+                                    placeholder="Registered Email"
+                                    Icon={FaEnvelope} // 💡 Changed icon to FaEnvelope
+>>>>>>> 1fb71020 (Mail functionality updated)
                                     readOnly 
                                 />
                                 {/* OTP Input */}
@@ -631,6 +838,7 @@ const ForgotPassword = () => {
                         </>
                     )}
 
+<<<<<<< HEAD
                     {/* Message */}
                     {message && (
                         <p className="message-box" style={{
@@ -642,6 +850,8 @@ const ForgotPassword = () => {
                         </p>
                     )}
 
+=======
+>>>>>>> 1fb71020 (Mail functionality updated)
                     <div className="neon-divider"></div>
 
                     <div className="links">

@@ -1,61 +1,56 @@
 // controllers/authController.js
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { Vonage } = require('@vonage/server-sdk');
 const dotenv = require('dotenv');
 const db = require('../models/index');
 const User = db.User;
 const generateOTP = require('../utils/otpGenerator');
+const sgMail = require('@sendgrid/mail');
 
 dotenv.config();
 
-// --- START Vonage Configuration ---
-const VONAGE_API_KEY = process.env.VONAGE_API_KEY || '9278200e';
-const VONAGE_API_SECRET = process.env.VONAGE_API_SECRET || 'zb6LV8qp88qsPjaQ';
-const VONAGE_SENDER_ID = process.env.VONAGE_SENDER_ID || 'VonageAPI';
+// --- START SendGrid Configuration ---
+sgMail.setApiKey(process.env.SENDGRID_API_KEY );
 
-const vonage = new Vonage({
-    apiKey: VONAGE_API_KEY,
-    apiSecret: VONAGE_API_SECRET,
-});
+const SENDER_EMAIL = process.env.SENDER_EMAIL;
+const SENDER_NAME = 'INFINITY SQUAD LMS';
 
-const formatPhoneNumber = (countryCode, phoneNumber) => {
-    const rawNumber = phoneNumber.replace(/^\+/, '');
-    const code = countryCode.replace(/^\+/, '');
-    if (rawNumber.startsWith(code)) return rawNumber;
-    return `${code}${rawNumber}`;
-};
-// --- END Vonage Configuration ---
-
-const sendVerificationSMS = async (user, purpose = 'Verification') => {
+// Helper function for sending email
+const sendVerificationEmail = async (user, purpose = 'Verification') => {
     const otp = generateOTP();
     const otpExpires = Date.now() + 10 * 60 * 1000;
 
     user.otp = otp;
     user.otpExpires = new Date(otpExpires);
-    await user.save();
+    await user.save(); // Save OTP and expiry to the database
 
-    const fullPhoneNumber = formatPhoneNumber(user.countryCode, user.phoneNumber);
-    const textMessage = `Your LMS ${purpose} Code is: ${otp}. It expires in 10 minutes.`;
+    const subject = `Your LMS ${purpose} Code`;
+    const htmlContent = `
+        <p>Hello ${user.name},</p>
+        <p>Your one-time **${purpose}** code is:</p>
+        <h2 style="color: #4CAF50;">${otp}</h2>
+        <p>This code is valid for **10 minutes**.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <p>Thank you,<br>${SENDER_NAME}</p>
+    `;
+
+    const msg = {
+        to: user.email,
+        from: {
+            email: SENDER_EMAIL,
+            name: SENDER_NAME,
+        },
+        subject: subject,
+        html: htmlContent,
+    };
 
     try {
-        const response = await vonage.sms.send({
-            to: fullPhoneNumber,
-            from: VONAGE_SENDER_ID,
-            text: textMessage
-        });
-
-        if (response.messages[0].status === '0') {
-            console.log('✅ SMS sent successfully:', response.messages[0]);
-        } else {
-            console.error(`❌ Vonage SMS Error (${response.messages[0].status}):`, response.messages[0]['error-text']);
-            throw new Error(`SMS delivery failed: ${response.messages[0]['error-text']}`);
-        }
-
+        await sgMail.send(msg);
+        console.log(`✅ Email sent successfully to ${user.email} for ${purpose}.`);
         return otp;
     } catch (error) {
-        console.error('❌ Failed to send SMS:', error);
-        throw new Error('Could not send verification SMS.');
+        console.error('❌ Failed to send email:', error.response?.body || error.message);
+        throw new Error('Could not send verification email. Check SendGrid configuration and API Key.');
     }
 };
 
@@ -81,19 +76,16 @@ exports.registerUser = async (req, res) => {
     }
 
     try {
-        // Check if user already exists by email
         let user = await User.findOne({ where: { email } });
         if (user) {
             return res.status(400).json({ message: 'User with this email already exists.' });
         }
 
-        // Check if user already exists by phone number and country code
         user = await User.findOne({ where: { phoneNumber, countryCode } });
         if (user) {
             return res.status(400).json({ message: 'User with this phone number already exists.' });
         }
 
-        // ✅ Save raw phone number and countryCode
         user = await User.create({ 
             name, 
             email, 
@@ -104,12 +96,12 @@ exports.registerUser = async (req, res) => {
             isVerified: false 
         });
 
-        await sendVerificationSMS(user, 'Account Verification');
+        await sendVerificationEmail(user, 'Account Verification');
 
         res.status(201).json({
-            message: 'Registration successful. OTP sent to your phone number for verification.',
+            message: 'Registration successful. OTP sent to your email for verification.',
             userId: user.id,
-            fullPhoneNumber: formatPhoneNumber(user.countryCode, user.phoneNumber),
+            email: user.email,
         });
 
     } catch (error) {
@@ -122,7 +114,7 @@ exports.registerUser = async (req, res) => {
 // 2. OTP Verification Logic
 // ----------------------------------------------------
 exports.verifyOTP = async (req, res) => {
-    const { identifier, otp } = req.body; 
+    const { identifier, otp } = req.body; // 'identifier' is assumed to be the user's email
 
     if (!identifier || !otp) {
         return res.status(400).json({ message: 'Please provide identifier (email) and OTP.' });
@@ -191,9 +183,9 @@ exports.loginUser = async (req, res) => {
         }
 
         if (!user.isVerified) {
-            await sendVerificationSMS(user, 'Account Verification'); 
+            await sendVerificationEmail(user, 'Account Verification'); 
             return res.status(403).json({ 
-                message: 'Account not verified. A new verification OTP has been sent to your phone number.',
+                message: 'Account not verified. A new verification OTP has been sent to your email.',
                 requiresOTP: true 
             });
         }
@@ -221,25 +213,23 @@ exports.loginUser = async (req, res) => {
 // 4. Forgot Password (Request Reset) Logic
 // ----------------------------------------------------
 exports.forgotPassword = async (req, res) => {
-    const { phoneNumber, countryCode } = req.body;
+    const { email } = req.body;
 
-    if (!phoneNumber || !countryCode) {
-        return res.status(400).json({ message: 'Please provide your country code and phone number.' });
+    if (!email) {
+        return res.status(400).json({ message: 'Please provide your email address.' });
     }
 
-    const searchNumber = phoneNumber.replace(/^\+/, '');
-
     try {
-        const user = await User.findOne({ where: { phoneNumber: searchNumber, countryCode } });
+        const user = await User.findOne({ where: { email } });
 
         if (!user) {
-            return res.status(404).json({ message: 'User with this phone number does not exist.' });
+            return res.status(404).json({ message: 'User with this email does not exist.' });
         }
 
-        await sendVerificationSMS(user, 'Password Reset');
+        await sendVerificationEmail(user, 'Password Reset');
 
         res.status(200).json({
-            message: 'Password reset code has been sent to your phone number via SMS.',
+            message: 'Password reset code has been sent to your email address.',
         });
     } catch (error) {
         console.error(error);
@@ -248,24 +238,22 @@ exports.forgotPassword = async (req, res) => {
 };
 
 // ----------------------------------------------------
-// 5. Reset Password Logic (using OTP)
+// 5. Reset Password Logic (using OTP via Email)
 // ----------------------------------------------------
 exports.resetPassword = async (req, res) => {
-    const { phoneNumber, countryCode, otp, newPassword } = req.body;
+    const { email, otp, newPassword } = req.body;
 
-    if (!phoneNumber || !countryCode || !otp || !newPassword) {
-        return res.status(400).json({ message: 'Please provide phone number, country code, OTP, and new password.' });
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ message: 'Please provide email, OTP, and new password.' });
     }
 
-    const searchNumber = phoneNumber.replace(/^\+/, '');
-
     try {
-        const user = await User.findOne({ where: { phoneNumber: searchNumber, countryCode } });
+        const user = await User.findOne({ where: { email } });
 
         if (!user) {
             return res.status(404).json({ message: 'Invalid request: User not found.' });
         }
-
+        
         if (user.otpExpires < new Date()) {
             return res.status(400).json({ message: 'Invalid or expired password reset OTP.' });
         }
@@ -274,7 +262,7 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Invalid password reset OTP.' });
         }
 
-        user.password = newPassword;
+        user.password = newPassword; 
         user.otp = null;
         user.otpExpires = null;
         await user.save();
@@ -285,5 +273,43 @@ exports.resetPassword = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error during password reset.' });
+    }
+};
+
+// ----------------------------------------------------
+// 6. Resend OTP Verification Email Logic (NEW)
+// ----------------------------------------------------
+exports.resendOTP = async (req, res) => {
+    const { email, purpose = 'Verification' } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Please provide the user email address.' });
+    }
+
+    try {
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+            // Respond with a non-specific error to avoid user enumeration
+            return res.status(404).json({ message: 'User not found or ineligible for resend.' });
+        }
+        
+        if (user.isVerified && purpose === 'Verification') {
+            return res.status(400).json({ message: 'Account is already verified. Cannot resend verification code.' });
+        }
+
+        // Send a new OTP email
+        await sendVerificationEmail(user, purpose); 
+
+        let message = `New ${purpose} code has been successfully sent to your email.`;
+
+        res.status(200).json({
+            message: message,
+            email: user.email,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: `Server error during OTP resend: ${error.message}` });
     }
 };
