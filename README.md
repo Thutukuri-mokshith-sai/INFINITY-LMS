@@ -14,31 +14,44 @@ for frontend :
              cd lms-frontend  && npm start
 for backend :
             cd lms-backend  && npm start
-# TECHNICAL STACK
-Frontend
-    Framework       : React.js
-    Deployment      : Netlify
-Backend
-    Runtime         : Node.js
-    Framework       : Express.js
-    Authentication  : JWT (JSON Web Tokens)
-    Deployment      : Render
-Database
-    Primary Database: PostgreSQL
-    Cloud Database  : Neon.db
-File Storage
-    Cloud Storage   : Cloudinary
-Emails
-    Service         : SendGrid
-NLP & AI
-    Tokenization & Text Processing : SpaCy (encorewebmd model)
-    Chatbot Integration           : Grok API
-Additional Notes
-    - Full-stack application with RESTful API architecture
-    - Designed for scalable deployment and cloud-based storage
-    - Integrates AI-powered NLP features for enhanced user interaction
+💻 Technical Stack
+🎨 Frontend
 
-## Features
+Framework: React.js
+
+Deployment: Netlify
+
+🧩 Backend
+
+Runtime: Node.js
+
+Framework: Express.js
+
+Authentication: JWT (JSON Web Tokens)
+
+Deployment: Render
+
+🗃️ Database
+
+Primary Database: PostgreSQL
+
+Cloud Database: Neon.db
+
+☁️ File Storage
+
+Cloud Storage: Cloudinary
+
+✉️ Emails
+
+Service: SendGrid
+
+🤖 NLP & AI
+
+Tokenization & Text Processing: SpaCy (en_core_web_md model)
+
+Chatbot Integration: Grok API
+
+🧱 Architecture Notes## Features
 ### 🥉 Bronze (Basic)
 - ✅ User Registration & Login (Student / Teacher)
 - ✅ Secure authentication (JWT)
@@ -67,3 +80,4 @@ Additional Notes
 - ✅ Course material upload (PDF/PPT)
 - ✅ Notifications for assignments/grades
 - ✅ Course discussion forums
+
