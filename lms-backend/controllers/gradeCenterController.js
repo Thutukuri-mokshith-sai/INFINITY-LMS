@@ -9,9 +9,9 @@ const Course = db.Course;
 const User = db.User;
 
 const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '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');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const SENDER_EMAIL = '22781A33D2@svcet.edu.in';
+const SENDER_EMAIL = process.env.SENDER_EMAIL;
 const SENDER_NAME = 'INFINITY SQUAD LMS';
 
 // ----------------------------------------------------

@@ -40,7 +40,7 @@ const checkTeacherAssignmentAuth = async (assignmentId, teacherId) => {
 // SIMILARITY CHECK CONFIGURATION AND HELPERS
 // ====================================================================
 
-const PLAGIARISM_API_URL = 'http://127.0.0.1:5000/compare-texts';
+const PLAGIARISM_API_URL = 'https://eco-kisan.netlify.app//compare-texts';
 const SIMILARITY_THRESHOLD = 0.70; // 70% similarity to be flagged
 
 /**
@@ -240,9 +240,9 @@ exports.checkSubmissionSimilarity = async (req, res) => {
 // ====================================================================
 
 const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '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');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const SENDER_EMAIL = '22781A33D2@svcet.edu.in';
+const SENDER_EMAIL =process.env.SENDER_EMAIL;
 const SENDER_NAME = 'INFINITY SQUAD LMS';
 
 exports.createAssignment = async (req, res) => {

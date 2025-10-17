@@ -11,7 +11,7 @@ dotenv.config();
 
 // --- START SendGrid Configuration (FIXED SENDER EMAIL) ---
 // Using the same API key as your server.js
-sgMail.setApiKey('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');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // 💡 FIX: Use the verified hardcoded email address or ensure SENDER_EMAIL is set in your .env
 const SENDER_EMAIL = '22781A33D2@svcet.edu.in';
