@@ -1,107 +1,128 @@
-// controllers/leaderboardController.js
+const { User, Course, Enrollment, Assignment, Submission } = require('../models/index');
+const { Sequelize } = require('sequelize');
 
-const { Course, Assignment, Submission, User } = require('../models'); // Assuming index.js exports these
-const { sequelize } = require('../models'); // Import sequelize instance for raw queries/utilities
-const { Op, literal, col } = require('sequelize');
-
-
-/**
- * @desc    Get the overall assignment performance leaderboard for a course
- * @route   GET /api/leaderboard/course/:courseId
- * @access  Private (Authenticated users)
- */
+// GET /api/leaderboard/course/:courseId
 exports.getCourseLeaderboard = async (req, res) => {
     const { courseId } = req.params;
 
     try {
-        // 1. Check if the course exists and the user is authorized/enrolled (optional but good practice)
-        // For simplicity, we'll only check if the course exists.
-        const course = await Course.findByPk(courseId);
+        // 1. Get Course Details (Title and Max Points)
+        const course = await Course.findByPk(courseId, {
+            attributes: ['title'],
+            include: [{
+                model: Assignment,
+                attributes: [
+                    [Sequelize.fn('SUM', Sequelize.col('maxPoints')), 'maxTotalPoints']
+                ]
+            }]
+        });
+
         if (!course) {
-            return res.status(404).json({ message: 'Course not found.' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Course not found.' 
+            });
         }
 
-        // 2. Calculate the maximum possible points for the course
-        const maxTotalPointsResult = await Assignment.findOne({
-            attributes: [
-                [sequelize.fn('SUM', sequelize.col('maxPoints')), 'maxTotalPoints']
-            ],
-            where: { courseId },
-            raw: true,
-        });
-        const maxTotalPoints = parseFloat(maxTotalPointsResult.maxTotalPoints) || 0;
+        // The max points calculation is nested under Assignments
+        const maxTotalPoints = course.Assignments[0] ? 
+                               course.Assignments[0].dataValues.maxTotalPoints || 0 : 
+                               0;
 
-        // 3. Aggregate student scores using a JOIN query
-        const studentScores = await User.findAll({
+        if (maxTotalPoints === 0) {
+             return res.status(200).json({
+                success: true,
+                courseTitle: course.title,
+                maxCoursePoints: 0,
+                leaderboard: [],
+                message: 'No assignments found for this course, leaderboard is empty.'
+            });
+        }
+
+
+        // 2. Fetch Leaderboard Data
+        const leaderboardData = await User.findAll({
             attributes: [
                 'id',
                 'name',
-                'email',
-                [literal('SUM(CASE WHEN Submissions.grade IS NOT NULL THEN Submissions.grade ELSE 0 END)'), 'totalScore'],
-                [literal('COUNT(DISTINCT Submissions.assignmentId)'), 'assignmentsSubmitted'],
+                // Calculate the SUM of grades received by the student for this course's assignments
+                [
+                    Sequelize.literal(`
+                        (SELECT SUM(S.grade) FROM Submissions AS S
+                         INNER JOIN Assignments AS A ON S.assignmentId = A.id
+                         WHERE S.studentId = User.id
+                           AND A.courseId = ${courseId}
+                           AND S.grade IS NOT NULL)
+                    `), 
+                    'totalScore'
+                ],
+                // Count the number of graded submissions for this course
+                [
+                    Sequelize.literal(`
+                        (SELECT COUNT(S.id) FROM Submissions AS S
+                         INNER JOIN Assignments AS A ON S.assignmentId = A.id
+                         WHERE S.studentId = User.id
+                           AND A.courseId = ${courseId}
+                           AND S.grade IS NOT NULL)
+                    `), 
+                    'assignmentsSubmitted'
+                ]
             ],
-            // Ensure we only include students who are enrolled in the course
-            include: [
-                {
-                    model: Course,
-                    as: 'EnrolledCourses',
-                    through: { attributes: [] }, // Exclude Enrollment join table attributes
-                    where: { id: courseId },
-                    required: true, // Only include Users enrolled in this course
-                },
-                {
-                    model: Submission,
-                    as: 'StudentSubmissions',
-                    attributes: [], // Don't select submission attributes
-                    required: false, // Use LEFT JOIN to include students with 0 submissions
-                    include: {
-                        model: Assignment,
-                        as: 'Assignment',
-                        attributes: [],
-                        where: { courseId: courseId }, // Filter submissions only for this course's assignments
-                        required: true,
-                    }
-                }
-            ],
-            group: ['User.id', 'User.name', 'User.email'], // Group by user details
+            include: [{
+                model: Enrollment,
+                attributes: [],
+                where: { courseId: courseId }
+            }],
+            where: {
+                role: 'Student'
+            },
+            // Filter out students who have no submissions/score
+            having: Sequelize.literal('totalScore IS NOT NULL AND totalScore > 0'), 
+            group: ['User.id', 'User.name'],
             order: [
-                [literal('totalScore'), 'DESC'], // Sort by total score descending
-                ['name', 'ASC'] // Secondary sort by name
+                [Sequelize.literal('totalScore'), 'DESC'], // Primary sort: Highest score first
+                ['name', 'ASC'] // Secondary sort: Alphabetical by name
             ],
-            raw: true,
-            subQuery: false, // Important for using ORDER and LIMIT with includes
+            raw: true, // Return raw JSON objects
         });
 
-        // 4. Process and enhance the results
-        const leaderboard = studentScores.map(student => {
-            const totalScore = parseFloat(student.totalScore) || 0;
-            const scorePercentage = maxTotalPoints > 0 ? (totalScore / maxTotalPoints) * 100 : 0;
+        // 3. Process and Rank the Data
+        let rank = 1;
+        let lastScore = null;
+
+        const rankedLeaderboard = leaderboardData.map((student, index) => {
+            const totalScore = student.totalScore || 0;
+            const scorePercentage = maxTotalPoints > 0 
+                                     ? ((totalScore / maxTotalPoints) * 100).toFixed(1) 
+                                     : 0;
             
+            // Handle ties: students with the same score get the same rank
+            if (lastScore !== totalScore) {
+                rank = index + 1;
+            }
+            lastScore = totalScore;
+
             return {
                 id: student.id,
                 name: student.name,
-                email: student.email,
-                totalScore: totalScore.toFixed(2),
-                maxPossibleScore: maxTotalPoints,
-                scorePercentage: scorePercentage.toFixed(2) + '%',
-                assignmentsSubmitted: parseInt(student.assignmentsSubmitted, 10),
+                totalScore: totalScore,
+                scorePercentage: parseFloat(scorePercentage),
+                assignmentsSubmitted: student.assignmentsSubmitted || 0,
+                rank: rank
             };
         });
 
-        // 5. Send the response
         res.status(200).json({
-            status: 'success',
-            courseId: parseInt(courseId, 10),
+            success: true,
             courseTitle: course.title,
             maxCoursePoints: maxTotalPoints,
-            results: leaderboard.length,
-            leaderboard,
+            leaderboard: rankedLeaderboard
         });
 
     } catch (error) {
-        console.error('Error fetching course leaderboard:', error);
+        console.error('Leaderboard calculation error:', error);
         res.status(500).json({ 
-            status: 'error', 
+            success: false, 
             message: 'Failed to retrieve course leaderboard.', 
             error: error.message 
         });

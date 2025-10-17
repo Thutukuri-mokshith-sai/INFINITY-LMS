@@ -4,8 +4,8 @@ import {
     FaUniversity, FaBookOpen, FaUserCircle, FaSignOutAlt, FaBars, FaTimes,
     FaListAlt, FaStar, FaArrowLeft, FaClock, FaSpinner, FaCalendarAlt, FaChalkboardTeacher,
     FaFileSignature, FaCheckCircle, FaExclamationCircle, FaHourglassHalf, FaClipboardCheck,
-    FaComments, FaFolderOpen, FaFileAlt, FaLink, FaDownload // Added File/Link icons
-} from 'react-icons/fa';
+    FaComments, FaFolderOpen, FaLink 
+} from 'react-icons/fa'; // Removed unused icons like FaFileAlt, FaDownload
 import { useAuth } from "../../context/AuthContext";
 import './StudentDashboard.css';
 
@@ -14,8 +14,6 @@ const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
 // ---------------------------------------------------------------------
 // --- REUSED COMPONENTS (ProfileModal, DashboardNavbar, DashboardSidebar) ---
-// (Assume these are available or defined in your environment)
-// ... (Your existing ProfileModal, DashboardNavbar, DashboardSidebar components remain here)
 // ---------------------------------------------------------------------
 
 const ProfileModal = ({ authData, onClose }) => {
@@ -38,7 +36,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
+        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -137,6 +135,107 @@ const CourseLinkCard = ({ icon, title, subtitle, linkTo, isDimmed = false }) => 
 
 
 // ---------------------------------------------------------------------
+// --- NEW WIDGET COMPONENT: CourseLeaderboardWidget ---
+// ---------------------------------------------------------------------
+const CourseLeaderboardWidget = ({ courseId, token }) => {
+    const [leaderboard, setLeaderboard] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [courseInfo, setCourseInfo] = useState({});
+
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            setLoading(true);
+            setError(null);
+            
+            if (!token || !courseId) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/leaderboard/course/${courseId}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`, 
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch leaderboard.');
+                }
+                
+                const data = await response.json();
+                
+                setLeaderboard(data.leaderboard || []);
+                setCourseInfo({ 
+                    title: data.courseTitle,
+                    maxPoints: data.maxCoursePoints
+                });
+                
+            } catch (err) {
+                console.error('Leaderboard Fetch Error:', err);
+                setError(err.message || 'An error occurred while loading the leaderboard.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLeaderboard();
+    }, [courseId, token]);
+
+    if (loading) {
+        return (
+            <div className="widget-card leaderboard-widget">
+                <div className="loading-state-small">
+                    <FaSpinner className="spinner" /> 
+                    <p>Loading Leaderboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="widget-card leaderboard-widget error-state-small">
+                <p>Leaderboard Error: {error}</p>
+            </div>
+        );
+    }
+    
+    const topStudents = leaderboard.slice(0, 5); 
+
+    return (
+        <div className="widget-card leaderboard-widget">
+            <h3 className="widget-title"><FaStar /> Course Leaderboard</h3>
+            <p className="widget-subtitle">Top {topStudents.length} Students (Max: {courseInfo.maxPoints} pts)</p>
+            
+            {topStudents.length === 0 ? (
+                <p className="no-data-message-small">No graded submissions to show ranking.</p>
+            ) : (
+                <ul className="leaderboard-list">
+                    {topStudents.map((student) => (
+                        <li key={student.id} className={`leaderboard-item ${student.rank === 1 ? 'rank-one' : ''}`}>
+                            <span className="rank-badge">{student.rank}</span>
+                            <span className="student-name-list">{student.name}</span>
+                            <span className="score-percentage">{student.scorePercentage}%</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            
+            <Link to={`/student/courses/${courseId}/leaderboard`} className="btn-action-neon small full-width-btn" style={{ marginTop: '15px' }}>
+                View Full Leaderboard
+            </Link>
+        </div>
+    );
+};
+
+
+// ---------------------------------------------------------------------
 // --- MAIN COMPONENT: StudentCourseDetails ---
 // ---------------------------------------------------------------------
 const StudentCourseDetails = () => {
@@ -152,7 +251,7 @@ const StudentCourseDetails = () => {
 
     const [course, setCourse] = useState(null); 
     const [assignments, setAssignments] = useState([]); 
-    const [forumId, setForumId] = useState(null); // Keep forumId state to pass to the card
+    const [forumId, setForumId] = useState(null); 
     
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -165,9 +264,8 @@ const StudentCourseDetails = () => {
         navigate('/login');
     };
 
-    // Helper to fetch submission status for an assignment (Unchanged)
+    // Helper to fetch submission status for an assignment
     const fetchSubmissionStatus = useCallback(async (assignmentId) => {
-        // ... (Existing implementation for fetchSubmissionStatus)
         try {
             const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/my-submission`, {
                 method: 'GET',
@@ -189,14 +287,14 @@ const StudentCourseDetails = () => {
         }
     }, [token]);
 
-    // Helper to fetch the Forum ID associated with the Course (Unchanged)
+    // Helper to fetch the Forum ID associated with the Course
     const fetchForumId = useCallback(async (id) => {
         try {
             const response = await fetch(`${API_BASE_URL}/forums/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (response.status === 404) return null; // Forum not found
+            if (response.status === 404) return null; 
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || `Failed to fetch forum for course ${id}.`);
@@ -307,12 +405,18 @@ const StudentCourseDetails = () => {
                                 <FaCalendarAlt size={24} /><h3>Start Date</h3><p>{course.startDate ? new Date(course.startDate).toLocaleDateString() : 'N/A'}</p>
                             </div>
                             
-                            {/* NEW: MATERIALS LINK CARD */}
+                            {/* 🏆 NEW: LEADERBOARD WIDGET */}
+                            <CourseLeaderboardWidget 
+                                courseId={courseId} 
+                                token={token} 
+                            />
+                            
+                            {/* MATERIALS LINK CARD */}
                             <CourseLinkCard 
                                 icon={<FaFolderOpen size={24} />}
                                 title="Course Materials"
                                 subtitle="View files and links"
-                                linkTo={`/student/materials/${courseId}`} // New route for materials
+                                linkTo={`/student/materials/${courseId}`} 
                             />
 
                             {/* FORUM LINK CARD */}
