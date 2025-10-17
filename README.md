@@ -1,4 +1,4 @@
-TEAM NAME :INFINITY SQUAD 
+# TEAM NAME :INFINITY SQUAD 
 # Team Members
 | Initial | Name                    | Role        | Contact         |
 |--------|--------------------------|-------------|---------------- |
@@ -14,7 +14,9 @@ TEAM NAME :INFINITY SQUAD
 ### 🖥️ Frontend
 cd lms-frontend && npm start
 ### 🧠 Backend
-cd lms-backend && npm start💻 Technical Stack
+cd lms-backend && npm start
+
+# 💻 Technical Stack
 
 ## 🎨 Frontend
 ### Framework
@@ -79,6 +81,7 @@ Grok API
 - ✅ Course material upload (PDF/PPT)
 - ✅ Notifications for assignments/grades
 - ✅ Course discussion forums
+
 
 
 
