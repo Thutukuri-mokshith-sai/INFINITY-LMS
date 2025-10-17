@@ -33,7 +33,7 @@ const sendVerificationEmail = async (user, purpose = 'Verification') => {
     const subject = `Your LMS ${purpose} Code`;
     const htmlContent = `
         <p>Hello ${user.name},</p>
-        <p>Your one-time **${purpose}** code is:</p>
+        <p>Your one-time <strong>${purpose}<strong/> code is:</p>
         <h2 style="color: #4CAF50;">${otp}</h2>
         <p>This code is valid for **10 minutes**.</p>
         <p>If you did not request this, please ignore this email.</p>

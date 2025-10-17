@@ -4,7 +4,7 @@ import {
     FaUniversity, FaBookOpen, FaUserCircle, FaSignOutAlt, FaBars, FaTimes,
     FaListAlt, FaStar, FaArrowLeft, FaClock, FaSpinner, FaCalendarAlt, FaChalkboardTeacher,
     FaFileSignature, FaCheckCircle, FaExclamationCircle, FaHourglassHalf, FaClipboardCheck,
-    FaComments, FaFolderOpen
+    FaComments, FaFolderOpen, FaAngleDown, FaAngleUp
 } from 'react-icons/fa';
 import { useAuth } from "../../context/AuthContext";
 import './StudentDashboard.css';
@@ -12,7 +12,7 @@ import './StudentDashboard.css';
 // --- API Base URL ---
 const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
-// -------------------- REUSED COMPONENTS -------------------- //
+// -------------------- REUSED COMPONENTS (Leaving others unchanged for brevity) -------------------- //
 
 const ProfileModal = ({ authData, onClose }) => (
     <div className="profile-modal-backdrop" onClick={onClose}>
@@ -118,12 +118,63 @@ const CourseLinkCard = ({ icon, title, subtitle, linkTo, isDimmed = false }) => 
     );
 };
 
-// -------------------- COURSE LEADERBOARD -------------------- //
+
+// -------------------- NEW/MODIFIED COURSE LEADERBOARD -------------------- //
+
+// New component for the full leaderboard view (to be displayed on toggle)
+const FullLeaderboardView = ({ leaderboard, maxPoints, onClose }) => {
+    return (
+        // The classes 'full-leaderboard-modal-backdrop' and 'full-leaderboard-modal'
+        // are responsible for the fixed overlay and neon styling (using CSS variables).
+        <div className="full-leaderboard-modal-backdrop" onClick={onClose}>
+            <div className="full-leaderboard-modal" onClick={(e) => e.stopPropagation()}>
+                <button className="modal-close-btn" onClick={onClose}><FaTimes /></button>
+                <h2 className="title-neon"><FaStar /> Full Course Leaderboard</h2>
+                <p>Total Graded Points: {maxPoints}</p>
+                
+                {leaderboard.length === 0 ? (
+                    <p className="no-data-message">No graded submissions to show ranking.</p>
+                ) : (
+                    <div className="leaderboard-table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Student Name</th>
+                                    <th>Score (%)</th>
+                                    <th>Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leaderboard.map((s) => (
+                                    <tr key={s.id} className={s.rank === 1 ? 'rank-one-row' : ''}>
+                                        <td><span className="rank-badge-table">{s.rank}</span></td>
+                                        <td>{s.name}</td>
+                                        <td>{s.scorePercentage}%</td>
+                                        <td>{s.currentPoints || '0'} / {maxPoints}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+                <button onClick={onClose} className="btn-action-neon full-width-btn" style={{ marginTop: '20px' }}>
+                    Close
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
 const CourseLeaderboardWidget = ({ courseId, token }) => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [courseInfo, setCourseInfo] = useState({});
+    const [isFullLeaderboardOpen, setIsFullLeaderboardOpen] = useState(false); // State controls the pop-up
+
+    const toggleFullLeaderboard = () => setIsFullLeaderboardOpen(prev => !prev);
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
@@ -157,29 +208,55 @@ const CourseLeaderboardWidget = ({ courseId, token }) => {
         fetchLeaderboard();
     }, [courseId, token]);
 
-    if (loading) return (<div className="widget-card leaderboard-widget"><FaSpinner className="spinner" /> Loading Leaderboard...</div>);
-    if (error) return (<div className="widget-card leaderboard-widget error-state-small">Leaderboard Error: {error}</div>);
+    // Use CSS classes for styling to adopt the theme variables
+    const widgetClasses = "widget-card leaderboard-widget leaderboard-widget-neon"; 
+
+    if (loading) return (<div className={widgetClasses}><FaSpinner className="spinner" /> Loading Leaderboard...</div>);
+    if (error) return (<div className={`${widgetClasses} error-state-small`}>Leaderboard Error: {error}</div>);
 
     const topStudents = leaderboard.slice(0, 5);
+    const hasMoreStudents = leaderboard.length > topStudents.length;
+    
     return (
-        <div className="widget-card leaderboard-widget">
-            <h3 className="widget-title"><FaStar /> Course Leaderboard</h3>
-            <p className="widget-subtitle">Top {topStudents.length} Students (Max: {courseInfo.maxPoints} pts)</p>
-            {topStudents.length === 0 ? (
-                <p className="no-data-message-small">No graded submissions to show ranking.</p>
-            ) : (
-                <ul className="leaderboard-list">
-                    {topStudents.map((s) => (
-                        <li key={s.id} className={`leaderboard-item ${s.rank === 1 ? 'rank-one' : ''}`}>
-                            <span className="rank-badge">{s.rank}</span>
-                            <span className="student-name-list">{s.name}</span>
-                            <span className="score-percentage">{s.scorePercentage}%</span>
-                        </li>
-                    ))}
-                </ul>
+        <>
+            {/* The conditional rendering of the FullLeaderboardView component */}
+            {isFullLeaderboardOpen && (
+                <FullLeaderboardView 
+                    leaderboard={leaderboard} 
+                    maxPoints={courseInfo.maxPoints} 
+                    onClose={toggleFullLeaderboard}
+                />
             )}
-            <Link to={`/student/courses/${courseId}/leaderboard`} className="btn-action-neon small full-width-btn">View Full Leaderboard</Link>
-        </div>
+            
+            {/* The main widget content */}
+            <div className={widgetClasses}>
+                <h3 className="widget-title"><FaStar /> Course Leaderboard</h3>
+                <p className="widget-subtitle">Top {topStudents.length} Students (Max: {courseInfo.maxPoints} pts)</p>
+                {topStudents.length === 0 ? (
+                    <p className="no-data-message-small">No graded submissions to show ranking.</p>
+                ) : (
+                    <ul className="leaderboard-list">
+                        {topStudents.map((s) => (
+                            <li key={s.id} className={`leaderboard-item ${s.rank === 1 ? 'rank-one' : ''}`}>
+                                <span className="rank-badge">{s.rank}</span>
+                                <span className="student-name-list">{s.name}</span>
+                                <span className="score-percentage">{s.scorePercentage}%</span>
+                            </li>
+                        ))}
+                        {hasMoreStudents && (
+                            <li className="leaderboard-item-more">... and {leaderboard.length - topStudents.length} more</li>
+                        )}
+                    </ul>
+                )}
+                <button 
+                    onClick={toggleFullLeaderboard} 
+                    className="btn-action-neon small full-width-btn"
+                    style={{ marginTop: '10px' }} 
+                >
+                    {isFullLeaderboardOpen ? <FaAngleUp /> : <FaAngleDown />} View Full Leaderboard
+                </button>
+            </div>
+        </>
     );
 };
 
@@ -286,12 +363,16 @@ const StudentCourseDetails = () => {
                     <section className="dashboard-section core-section course-details-view">
                         <h2 className="section-title-neon">Course Overview</h2>
                         <div className="details-grid">
+                            {/* Course Details */}
                             <div className="widget-card detail-item"><FaChalkboardTeacher size={24} /><h3>Instructor</h3><p>{teacherName}</p></div>
                             <div className="widget-card detail-item"><FaClock size={24} /><h3>Duration</h3><p>{course.duration || 'N/A'}</p></div>
                             <div className="widget-card detail-item"><FaCalendarAlt size={24} /><h3>Start Date</h3><p>{course.startDate ? new Date(course.startDate).toLocaleDateString() : 'N/A'}</p></div>
 
-                            <CourseLeaderboardWidget courseId={courseId} token={token} />
-                            <CourseLinkCard style="color :white;" icon={<FaFolderOpen size={24} />} title="Course Materials" subtitle="View files and links" linkTo={`/student/materials/${courseId}`} />
+                            {/* Leaderboard Widget (now uses the pop-up logic) */}
+                            <CourseLeaderboardWidget courseId={courseId} token={token} /> 
+
+                            {/* Other Links */}
+                            <CourseLinkCard icon={<FaFolderOpen size={24} />} title="Course Materials" subtitle="View files and links" linkTo={`/student/materials/${courseId}`} />
                             <CourseLinkCard icon={<FaComments size={24} />} title="Discussion Forum" subtitle={forumId ? "Go to Discussion Board" : "Forum not yet created"} linkTo={forumId ? `/student/forums/${forumId}` : '#'} isDimmed={!forumId} />
                             <div className="widget-card detail-item"><FaListAlt size={24} /><h3>Course ID</h3><p>{courseId}</p></div>
                         </div>

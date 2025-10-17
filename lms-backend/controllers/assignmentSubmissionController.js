@@ -203,17 +203,23 @@ exports.checkSubmissionSimilarity = async (req, res) => {
 // ====================================================================
 
 // User Story 4: As a teacher, I want to create assignments for a course.
+const { Course, Assignment, AssignmentResource, Enrollment, User } = require('../models');
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || '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');
+
+const SENDER_EMAIL = '22781A33D2@svcet.edu.in';
+const SENDER_NAME = 'INFINITY SQUAD LMS';
+
 exports.createAssignment = async (req, res) => {
     const teacherId = req.user.id;
     const { courseId, title, description, dueDate, maxPoints, resources } = req.body;
 
-    // Basic validation
     if (!courseId || !title || !dueDate) {
         return res.status(400).json({ message: 'Course ID, title, and due date are required.' });
     }
 
     try {
-        // 1. Authorization: Check if the logged-in user is the teacher of the course
+        // 1. Authorization: Check if teacher owns this course
         const course = await Course.findByPk(courseId);
         if (!course || course.teacherId !== teacherId) {
             return res.status(403).json({ message: 'You do not have permission to create assignments for this course.' });
@@ -229,7 +235,7 @@ exports.createAssignment = async (req, res) => {
             maxPoints: maxPoints || 100,
         });
 
-        // 3. Create associated Resources (e.g., PDF links)
+        // 3. Create associated AssignmentResources
         if (resources && Array.isArray(resources) && resources.length > 0) {
             const assignmentResources = resources.map(r => ({
                 assignmentId: newAssignment.id,
@@ -240,9 +246,50 @@ exports.createAssignment = async (req, res) => {
             await AssignmentResource.bulkCreate(assignmentResources);
         }
 
+        // 4. Notify all enrolled students
+        const enrollments = await Enrollment.findAll({
+            where: { courseId },
+            include: [{ model: User, as: 'Student' }]
+        });
+
+        const emailPromises = enrollments.map(async (enrollment) => {
+            const student = enrollment.Student;
+            if (!student) return;
+
+            const subject = `New Assignment in ${course.title}: ${title}`;
+            const htmlContent = `
+                <p>Hello ${student.name},</p>
+                <p>A new assignment has been created for the course <strong>${course.title}</strong> by ${req.user.name}.</p>
+                <p><strong>Title:</strong> ${title}</p>
+                ${description ? `<p><strong>Description:</strong> ${description}</p>` : ''}
+                <p><strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}</p>
+                <p>Please login to the LMS to view the assignment and submit your work.</p>
+                <p>Thank you,<br>${SENDER_NAME}</p>
+            `;
+
+            const msg = {
+                to: student.email,
+                from: {
+                    email: SENDER_EMAIL,
+                    name: SENDER_NAME
+                },
+                subject,
+                html: htmlContent
+            };
+
+            try {
+                await sgMail.send(msg);
+                console.log(`✅ Assignment email sent to ${student.email}`);
+            } catch (err) {
+                console.error(`❌ Failed to send assignment email to ${student.email}:`, err.response?.body || err.message);
+            }
+        });
+
+        await Promise.all(emailPromises);
+
         res.status(201).json({
             status: 'success',
-            message: 'Assignment successfully created.',
+            message: 'Assignment successfully created and students notified.',
             data: { assignment: newAssignment }
         });
 

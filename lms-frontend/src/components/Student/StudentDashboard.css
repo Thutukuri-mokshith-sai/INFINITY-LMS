@@ -2024,3 +2024,103 @@ fieldset:disabled {
         font-size: 0.85rem;
     }
 }
+/* --- LEADERBOARD MODAL STYLES --- */
+
+/* 1. Backdrop (The semi-transparent screen overlay) */
+.full-leaderboard-modal-backdrop {
+    /* CRITICAL: Fixes it to the viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Dark, semi-transparent background */
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Ensures it's on top of everything */
+    z-index: 9999; 
+    backdrop-filter: blur(5px);
+}
+
+/* 2. Modal Content (The actual pop-up container) */
+.full-leaderboard-modal {
+    background-color: #04251f; /* Slightly lighter than dark-bg for contrast */
+    color: var(--light-text);
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    /* Apply neon styling for the pop-up */
+    border: 3px solid var(--neon-color); 
+    box-shadow: 0 0 30px var(--neon-color); 
+    animation: fadeIn 0.3s ease-out; /* Add simple animation */
+}
+
+.full-leaderboard-modal .title-neon {
+    color: var(--neon-color);
+    text-shadow: var(--neon-shadow-blue);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    color: var(--red-neon);
+    font-size: 1.5em;
+    cursor: pointer;
+    text-shadow: var(--neon-shadow-red);
+}
+
+/* Leaderboard Table Styling inside the modal */
+.full-leaderboard-modal table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px; /* Spacing between rows */
+    margin-top: 15px;
+}
+
+.full-leaderboard-modal th,
+.full-leaderboard-modal td {
+    padding: 12px 15px;
+    text-align: left;
+    background-color: rgba(255, 255, 255, 0.05); /* subtle background */
+}
+
+.full-leaderboard-modal th {
+    background-color: var(--dark-bg);
+    color: var(--highlight-green);
+    font-weight: 700;
+    text-shadow: var(--secondary-shadow);
+}
+
+.full-leaderboard-modal .rank-one-row {
+    background-color: rgba(255, 215, 0, 0.2); /* Gold background for Rank 1 */
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.rank-badge-table {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 50%;
+    background-color: var(--red-neon);
+    color: white;
+    min-width: 25px;
+    text-align: center;
+    box-shadow: var(--neon-shadow-red);
+}
+
+/* Simple Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
