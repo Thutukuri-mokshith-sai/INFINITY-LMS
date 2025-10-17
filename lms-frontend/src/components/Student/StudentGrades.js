@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 
 // API Base
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
 // --- CSS String to be injected ---
 const GRADES_CSS = `
@@ -152,7 +152,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
     <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
       {isSidebarOpen ? <FaTimes /> : <FaBars />}
     </button>
-    <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+    <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
     <div className="nav-profile-group">
       <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
       <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlusCircle, FaBookOpen, FaChalkboardTeacher, FaClock, FaCalendarAlt, FaDollarSign, FaUserGraduate, FaBars, FaTimes, FaUniversity, FaUserCircle, FaSignOutAlt, FaListAlt, FaGraduationCap } from 'react-icons/fa';
+import { FaPlusCircle, FaBookOpen, FaChalkboardTeacher, FaClock, FaCalendarAlt, FaDollarSign, FaUserGraduate, FaBars, FaTimes, FaUniversity, FaUserCircle, FaSignOutAlt, FaListAlt, FaGraduationCap, FaTags, FaInfoCircle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import axios from 'axios';
-import './CreateCourse.css';
+import './CreateCourse.css'; // Assuming your CSS supports the neon/modern look
 
-// ⭐️ REAL API CALL FUNCTION ⭐️
+// --- REAL API CALL FUNCTION (Unchanged) ---
 const apiCreateCourse = async (courseData, token) => {
     // ⚠️ IMPORTANT: Replace with your actual backend URL
-    const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
+    const API_URL = process.env.REACT_APP_API_URL || 'https://lms-backend-foaq.onrender.com/api';
 
     try {
         const response = await axios.post(`${API_URL}/courses`, courseData, {
@@ -34,14 +34,7 @@ const apiCreateCourse = async (courseData, token) => {
     }
 };
 
-// --- HELPER FUNCTION FOR DATE CALCULATION ---
-/**
- * Calculates the end date based on a start date and a duration string (e.g., "8 Weeks").
- * @param {string} startDateString - The start date in 'YYYY-MM-DD' format.
- * @param {number} value - The numeric value for the duration (e.g., 8).
- * @param {string} unit - The unit for the duration (e.g., 'Weeks').
- * @returns {string} The calculated end date in 'YYYY-MM-DD' format.
- */
+// --- HELPER FUNCTION FOR DATE CALCULATION (Unchanged) ---
 const calculateEndDate = (startDateString, value, unit) => {
     if (!startDateString || !value || !unit) return '';
 
@@ -71,17 +64,16 @@ const CreateCourse = ({ onCourseCreated }) => {
     const { user, name, role, logout, isAuthenticated, token } = useAuth();
     const navigate = useNavigate();
 
-    // ⭐️ UPDATED STATE STRUCTURE ⭐️
+    // ⭐️ ENHANCEMENT: ADD 'category' to formData ⭐️
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        // Separate duration fields for flexible input
-        durationPreset: '8 Weeks', // e.g., '4 Weeks', '8 Weeks', 'Custom', 'Self-Paced'
-        durationValue: 8, // for Custom: e.g., 8
-        durationUnit: 'Weeks', // for Custom: e.g., 'Days', 'Weeks', 'Months'
-        // Aligning with Sequelize types
+        category: '', // New field for categorization
+        durationPreset: '8 Weeks', 
+        durationValue: 8, 
+        durationUnit: 'Weeks', 
         startDate: new Date().toISOString().split('T')[0],
-        endDate: calculateEndDate(new Date().toISOString().split('T')[0], 8, 'Weeks'), // Initial calculated end date
+        endDate: calculateEndDate(new Date().toISOString().split('T')[0], 8, 'Weeks'), 
         price: 0,
         maxStudents: 30,
     });
@@ -91,16 +83,21 @@ const CreateCourse = ({ onCourseCreated }) => {
     const [isError, setIsError] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-    // --- EFFECT TO UPDATE END DATE ---
+    // Hardcoded categories for the dropdown
+    const courseCategories = [
+        'Web Development', 'Data Science', 'Graphic Design', 
+        'Marketing', 'Business', 'Photography', 'Music', 'Other'
+    ];
+
+    // --- EFFECT TO UPDATE END DATE (Unchanged) ---
     useEffect(() => {
         let newEndDate = '';
 
         if (formData.durationPreset === 'Self-Paced') {
-            newEndDate = ''; // Clear end date for self-paced
+            newEndDate = '';
         } else if (formData.durationPreset === 'Custom') {
             newEndDate = calculateEndDate(formData.startDate, formData.durationValue, formData.durationUnit);
         } else {
-            // Handle '4 Weeks', '8 Weeks', '12 Weeks' presets
             const [valueStr, unit] = formData.durationPreset.split(' ');
             const value = parseInt(valueStr, 10);
             if (value && unit) {
@@ -108,45 +105,42 @@ const CreateCourse = ({ onCourseCreated }) => {
             }
         }
         
-        // Only update if the calculated date is different, to avoid infinite loops or unnecessary re-renders
         if (newEndDate !== formData.endDate) {
             setFormData(prevData => ({ ...prevData, endDate: newEndDate }));
         }
     }, [formData.startDate, formData.durationPreset, formData.durationValue, formData.durationUnit]);
 
 
-    // --- DASHBOARD NAVIGATION HANDLERS ---
+    // --- DASHBOARD NAVIGATION HANDLERS (Unchanged) ---
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
     const handleLogout = logout;
     const handleCancel = () => navigate('/teacher/courses');
 
-    // ⭐️ UPDATED CHANGE HANDLER ⭐️
+    // --- CHANGE HANDLER (Updated for 'category') ---
     const handleChange = (e) => {
         const { name, value, type } = e.target;
         
         setFormData(prevData => {
             let newData = { ...prevData };
             
-            // Handle numeric values
             const newValue = type === 'number' ? (value === '' ? '' : Number(value)) : value;
 
             if (name === 'durationPreset') {
                 newData[name] = newValue;
-                // Set default custom values if switching to 'Custom'
+                // ... (existing duration logic)
                 if (newValue === 'Custom' && newData.durationValue === '') {
                     newData.durationValue = 1;
                     newData.durationUnit = 'Weeks';
                 }
-                // Update duration for presets to ensure correct API payload
                 if (newValue !== 'Custom' && newValue !== 'Self-Paced') {
                     const [val, unit] = newValue.split(' ');
                     newData.durationValue = Number(val);
                     newData.durationUnit = unit;
                 }
             } else if (name === 'durationValue' && newValue < 1) {
-                // Prevent duration value from going below 1
                 newData[name] = 1;
-            } else if (name === 'durationUnit' || name === 'startDate') {
+            } else if (name === 'durationUnit' || name === 'startDate' || name === 'category') { 
+                // ⭐️ ADDED 'category' here
                 newData[name] = newValue;
             } else {
                 // For title, description, price, maxStudents
@@ -157,32 +151,33 @@ const CreateCourse = ({ onCourseCreated }) => {
         });
     };
 
+    // --- SUBMIT HANDLER (Updated for 'category' and better feedback) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setMessage('');
         setIsError(false);
 
-        // Simple client-side validation for required fields
         const isSelfPaced = formData.durationPreset === 'Self-Paced';
 
-        if (!formData.title || !formData.description || !formData.durationPreset || !formData.startDate || (!isSelfPaced && !formData.endDate)) {
+        // ⭐️ ENHANCEMENT: Added 'category' to client-side validation ⭐️
+        if (!formData.title || !formData.description || !formData.category || !formData.durationPreset || !formData.startDate || (!isSelfPaced && !formData.endDate)) {
             setIsError(true);
-            setMessage('Please fill in all required fields (Title, Description, Duration, and Dates).');
+            setMessage('Please fill in all required fields (Title, Category, Description, Duration, and Start Date).');
             setIsLoading(false);
             return;
         }
         
-        // Final duration value for the API payload
         const finalDurationString = isSelfPaced ? 'Self-Paced' : `${formData.durationValue} ${formData.durationUnit}`;
 
+        // ⭐️ ENHANCEMENT: Added 'category' to submissionData ⭐️
         const submissionData = {
             title: formData.title,
             description: formData.description,
-            // ⭐️ Use the constructed duration string and only send endDate if not self-paced ⭐️
+            category: formData.category, 
             duration: finalDurationString, 
             startDate: formData.startDate,
-            endDate: isSelfPaced ? null : formData.endDate, // Send null or undefined for self-paced
+            endDate: isSelfPaced ? null : formData.endDate, 
             price: formData.price, 
             maxStudents: formData.maxStudents, 
         };
@@ -190,30 +185,38 @@ const CreateCourse = ({ onCourseCreated }) => {
         try {
             const response = await apiCreateCourse(submissionData, token);
 
-            setMessage(response.message);
+            // ⭐️ MICRO-ANIMATION/FEEDBACK: Simulate toast message
+            setMessage(`🚀 Success! ${response.message}`);
+            setIsError(false);
+
 
             // Redirect to the list of courses or a success page after a short delay
             setTimeout(() => {
                 navigate('/teacher/courses');
                 if (onCourseCreated) onCourseCreated(response.course);
-            }, 1000);
+            }, 1500); // Wait a bit longer to show the success message
 
         } catch (error) {
+            // ⭐️ MICRO-ANIMATION/FEEDBACK: Display Error
             setIsError(true);
             setMessage(error.message || 'An unknown error occurred during course creation.');
         } finally {
-            // Keep loading false only if we didn't navigate away
-            if (message === '') setIsLoading(false);
+            // Keep loading false only if we didn't navigate away (i.e., we are still showing the message)
+            if (!isError) {
+                // If successful, let the redirect handle the change
+            } else {
+                setIsLoading(false);
+            }
         }
     };
 
-    // --- NAVIGATION BAR COMPONENT (No changes) ---
+    // --- NAVIGATION BAR COMPONENT (Unchanged) ---
     const CourseNavbar = () => (
         <nav className="dashboard-navbar-neon">
             <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
                 {isSidebarOpen ? <FaTimes /> : <FaBars />}
             </button>
-            <div className="logo"><FaUniversity className="logo-icon"/> The Matrix Academy</div>
+            <div className="logo"><FaUniversity className="logo-icon"/> INFINITY  LMS</div>
             <div className="nav-profile-group">
                 <span className="student-name">
                     <FaUserCircle /> <strong>{name}</strong>({role})
@@ -225,7 +228,7 @@ const CreateCourse = ({ onCourseCreated }) => {
         </nav>
     );
 
-    // --- SIDEBAR COMPONENT (No changes) ---
+    // --- SIDEBAR COMPONENT (Unchanged) ---
     const CourseSidebar = () => (
         <aside className={`dashboard-sidebar-neon ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
             <div className="sidebar-header">TEACHER MENU</div>
@@ -243,10 +246,9 @@ const CreateCourse = ({ onCourseCreated }) => {
                     <FaPlusCircle /> <span className="link-text">Create Course</span>
                 </Link>
                 <Link to="/teacher/profile" className="nav-link"> 
-  <FaUserCircle /> 
-  <span className="link-text">Profile</span>
-</Link>
-
+                    <FaUserCircle /> 
+                    <span className="link-text">Profile</span>
+                </Link>
             </nav>
         </aside>
     );
@@ -254,6 +256,18 @@ const CreateCourse = ({ onCourseCreated }) => {
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
     const isCustomDuration = formData.durationPreset === 'Custom';
     const isSelfPaced = formData.durationPreset === 'Self-Paced';
+
+    // ⭐️ ENHANCEMENT: Comprehensive check for submit button
+    const isFormInvalid = (
+        !formData.title || 
+        !formData.description || 
+        !formData.category || 
+        !formData.startDate || 
+        (!isSelfPaced && !formData.endDate) ||
+        formData.price < 0 ||
+        formData.maxStudents < 1 ||
+        (isCustomDuration && (!formData.durationValue || !formData.durationUnit))
+    );
 
     return (
         <div className="app-container">
@@ -284,6 +298,23 @@ const CreateCourse = ({ onCourseCreated }) => {
                                 />
                             </div>
 
+                            {/* ⭐️ ENHANCEMENT: ADDED CATEGORY FIELD ⭐️ */}
+                            <div className="form-group">
+                                <label htmlFor="category"><FaTags /> Course Category *</label>
+                                <select
+                                    id="category"
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="" disabled>Select a category...</option>
+                                    {courseCategories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            
                             <div className="form-group">
                                 <label htmlFor="description">Description *</label>
                                 <textarea
@@ -305,7 +336,7 @@ const CreateCourse = ({ onCourseCreated }) => {
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label htmlFor="durationPreset"><FaClock /> Duration *</label>
-                                    {/* ⭐️ DURATION PRESET SELECT ⭐️ */}
+                                    {/* DURATION PRESET SELECT */}
                                     <select
                                         id="durationPreset"
                                         name="durationPreset"
@@ -319,9 +350,12 @@ const CreateCourse = ({ onCourseCreated }) => {
                                         <option value="Self-Paced">Self-Paced</option>
                                         <option value="Custom">Custom...</option>
                                     </select>
+                                    {isSelfPaced && (
+                                        <small className="input-hint"><FaInfoCircle /> End Date is not required for Self-Paced courses.</small>
+                                    )}
                                 </div>
                                 
-                                {/* ⭐️ CUSTOM DURATION INPUTS ⭐️ */}
+                                {/* CUSTOM DURATION INPUTS */}
                                 {isCustomDuration && (
                                     <>
                                         <div className="form-group">
@@ -353,7 +387,6 @@ const CreateCourse = ({ onCourseCreated }) => {
                                     </>
                                 )}
                                 
-                                {/* Start Date is always needed */}
                                 <div className="form-group">
                                     <label htmlFor="startDate"><FaCalendarAlt /> Start Date *</label>
                                     <input
@@ -366,7 +399,7 @@ const CreateCourse = ({ onCourseCreated }) => {
                                     />
                                 </div>
                                 
-                                {/* ⭐️ CALCULATED END DATE (Read-only/Hidden for Self-Paced) ⭐️ */}
+                                {/* CALCULATED END DATE (Read-only/Hidden for Self-Paced) */}
                                 {!isSelfPaced && (
                                     <div className="form-group">
                                         <label htmlFor="endDate"><FaCalendarAlt /> Calculated End Date</label>
@@ -379,12 +412,11 @@ const CreateCourse = ({ onCourseCreated }) => {
                                             disabled // Prevent manual editing
                                             className="read-only-input"
                                         />
-                                        <small className="input-hint">Automatically calculated based on Start Date and Duration.</small>
+                                        <small className="input-hint">Calculated based on duration.</small>
                                     </div>
                                 )}
                                 
-                                {/* Price and Max Students remain optional/fixed */}
-                                <div className="form-group">
+                                {/* <div className="form-group">
                                     <label htmlFor="price"><FaDollarSign /> Price (USD)</label>
                                     <input
                                         type="number"
@@ -394,7 +426,7 @@ const CreateCourse = ({ onCourseCreated }) => {
                                         onChange={handleChange}
                                         min="0"
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="form-group">
                                     <label htmlFor="maxStudents"><FaUserGraduate /> Max Students</label>
@@ -412,6 +444,7 @@ const CreateCourse = ({ onCourseCreated }) => {
 
                         {/* Submission and Messaging */}
                         {message && (
+                            // ⭐️ ENHANCEMENT: Improved message box style
                             <div className={`message-box ${isError ? 'error-neon' : 'success-neon'}`}>
                                 {message}
                             </div>
@@ -421,9 +454,17 @@ const CreateCourse = ({ onCourseCreated }) => {
                             <button
                                 type="submit"
                                 className="btn-primary-neon"
-                                disabled={isLoading || !formData.title || !formData.description || (!isSelfPaced && !formData.endDate)}
+                                // ⭐️ ENHANCEMENT: Use the comprehensive validation check
+                                disabled={isLoading || isFormInvalid}
                             >
-                                {isLoading ? 'Creating...' : 'Create Course'}
+                                {/* ⭐️ ENHANCEMENT: Loading Spinner for smoother UX */}
+                                {isLoading ? (
+                                    <>
+                                        <FaPlusCircle className="spinner-icon" /> Creating...
+                                    </>
+                                ) : (
+                                    'Create Course'
+                                )}
                             </button>
                             <button
                                 type="button"
@@ -442,3 +483,4 @@ const CreateCourse = ({ onCourseCreated }) => {
 };
 
 export default CreateCourse;
+// Note: You would need to add CSS for .spinner-icon, .read-only-input, .input-hint, and the updated message-box styles for the full effect.

@@ -12,7 +12,7 @@ import { useAuth } from "../../context/AuthContext";
 import './StudentDashboard.css'; 
 
 // --- Configuration ---
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
 // --- API Service Functions (Provided in prompt) ---
 const forumAPI = {
@@ -98,7 +98,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" />INFINITY  LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -320,7 +320,14 @@ const StudentThreadDetailView = () => {
     
     // Determine the forum ID to navigate back to the thread list
     // Assumes the thread object contains 'forumId' for the specific forum view
-    const backLink = thread.forumId ? `/student/forums/${thread.forumId}` : `/student/my-courses`;
+    const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);  // go back one page in history
+    } else {
+      // fallback URL if no history
+      navigate(thread.forumId ? `/student/forums/${thread.forumId}` : `/student/my-courses`);
+    }
+  };
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
 
 
@@ -352,10 +359,9 @@ const StudentThreadDetailView = () => {
                     <div style={{ padding: '20px' }}>
                         
                         {/* Link back to the thread list (StudentForumView) */}
-                        <Link to={backLink} className="btn-action-neon" style={{ marginBottom: '20px' }}>
-                            <FaArrowLeft /> Back to Threads List
-                        </Link>
-
+                         <button onClick={handleBack} className="btn-action-neon" style={{ marginBottom: '20px' }}>
+      <FaArrowLeft /> Back to Threads List
+    </button>
                         {/* Edit Post Modal (updatePost UI) */}
                         {showEditModal && editingPost && (
                             <div className="modal-overlay" onClick={() => setShowEditModal(false)}>

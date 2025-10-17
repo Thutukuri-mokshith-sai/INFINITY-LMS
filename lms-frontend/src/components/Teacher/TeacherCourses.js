@@ -1,22 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { FaChalkboardTeacher, FaPlusCircle, FaEdit, FaTrash, FaClock, FaCalendarAlt, FaTimes, FaBars, FaUniversity, FaUserCircle, FaSignOutAlt, FaListAlt, FaGraduationCap, FaSpinner, FaInfoCircle } from 'react-icons/fa';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // ✅ ADDED useLocation
+import { FaChalkboardTeacher, FaPlusCircle, FaEdit, FaTrash, FaClock, FaCalendarAlt, FaTimes, FaBars, FaUniversity, FaUserCircle, FaSignOutAlt, FaListAlt, FaGraduationCap, FaSpinner, FaInfoCircle, FaSearch } from 'react-icons/fa';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import axios from 'axios';
 import './TeacherCourses.css';
 
 // ----------------------------------------------------------------------
 // 1. GLOBAL/IN-MEMORY CACHE SIMULATION
-// This object will persist course data across unmounts/mounts within the session.
 let courseCache = {
     data: null,
     isLoaded: false,
 };
 // ----------------------------------------------------------------------
 
+// --- INLINE STYLES FOR NEW/ENHANCED COMPONENTS ---
+const neonStyles = {
+    filterBar: {
+        display: 'flex',
+        gap: '15px',
+        marginBottom: '30px',
+        marginTop: '20px',
+        padding: '15px',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        borderRadius: '10px',
+        border: '1px solid #ff073a',
+        boxShadow: '0 0 10px rgba(255, 7, 58, 0.5)',
+        alignItems: 'center',
+    },
+    searchInput: {
+        flexGrow: 1,
+        padding: '10px 15px',
+        borderRadius: '5px',
+        border: '1px solid #ff073a',
+        backgroundColor: '#1a000a',
+        color: '#fff',
+        fontSize: '16px',
+        boxShadow: '0 0 5px rgba(255, 7, 58, 0.3)',
+        outline: 'none',
+        transition: 'border-color 0.3s, box-shadow 0.3s',
+        minWidth: '250px',
+    },
+    sortDropdown: {
+        padding: '10px 15px',
+        borderRadius: '5px',
+        border: '1px solid #39ff14',
+        backgroundColor: '#1a000a',
+        color: '#39ff14',
+        fontSize: '16px',
+        boxShadow: '0 0 5px rgba(57, 255, 20, 0.5)',
+        cursor: 'pointer',
+        appearance: 'none',
+    },
+    searchIcon: {
+        color: '#ff073a',
+        fontSize: '18px',
+    },
+};
+// ----------------------------------------------------------------------
 
 // --- API FUNCTIONS (Unchanged) ---
-const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-backend-foaq.onrender.com/api';
 
 /**
  * Fetches all courses created by the authenticated teacher.
@@ -70,19 +113,22 @@ const apiDeleteCourse = async (courseId, token) => {
 const TeacherCourses = () => {
     const { isAuthenticated, name, role, logout, token } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation(); // ✅ Access the location object
+    const location = useLocation();
 
-    // Check navigation state to see if we just came from a Course Creation success
     const forceReload = location.state?.courseCreated === true; 
     
     // 2. STATE INITIALIZATION: Check cache first, but override if forced
     const initialLoadingState = forceReload ? true : !courseCache.isLoaded;
     const initialCoursesState = forceReload ? [] : courseCache.data;
 
-    const [courses, setCourses] = useState(initialCoursesState || []);
+    const [allCourses, setAllCourses] = useState(initialCoursesState || []); // Renamed for clarity
     const [isLoading, setIsLoading] = useState(initialLoadingState);
     const [error, setError] = useState(null);
     
+    // 💡 NEW STATE for search/sort
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('date_dsc'); // 'date_dsc', 'date_asc', 'title_asc', 'title_dsc'
+
     // UI State for Modals/Forms (Unchanged)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -103,7 +149,7 @@ const TeacherCourses = () => {
         // 3. Conditional Cache Use: Only use cache if it's loaded AND we aren't forcing a reload.
         if (courseCache.isLoaded && !forceReload) { 
             setIsLoading(false);
-            setCourses(courseCache.data);
+            setAllCourses(courseCache.data);
             return;
         }
 
@@ -114,7 +160,7 @@ const TeacherCourses = () => {
             const data = await apiGetTeacherCourses(token);
             
             // Update component state AND the cache
-            setCourses(data);
+            setAllCourses(data);
             courseCache.data = data;
             courseCache.isLoaded = true;
 
@@ -133,12 +179,8 @@ const TeacherCourses = () => {
 
     // Initial data fetch
     useEffect(() => {
-        // The dependency array could be enhanced to include 'forceReload' if you want
-        // the effect to run again immediately upon navigation, but checking the initial
-        // state and location state on mount is often sufficient. 
-        // We'll keep it simple by relying on the initial state setup for now.
         fetchCourses();
-    }, [token, forceReload]); // ✅ Added forceReload to dependencies
+    }, [token, forceReload]); 
 
     // --- HANDLERS (Adjusted cache clear for mutation/logout) ---
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
@@ -188,7 +230,7 @@ const TeacherCourses = () => {
         try {
             const updatedCourse = await apiUpdateCourse(editingCourse.id, editForm, token);
             
-            setCourses(prevCourses => {
+            setAllCourses(prevCourses => {
                 const newCourses = prevCourses.map(c => 
                     c.id === updatedCourse.id ? updatedCourse : c
                 );
@@ -230,7 +272,7 @@ const TeacherCourses = () => {
         try {
             await apiDeleteCourse(deletingCourseId, token);
             
-            setCourses(prevCourses => {
+            setAllCourses(prevCourses => {
                 const newCourses = prevCourses.filter(c => c.id !== deletingCourseId);
                 // Update the cache immediately after successful mutation
                 courseCache.data = newCourses; 
@@ -255,13 +297,41 @@ const TeacherCourses = () => {
     };
     // ------------------------------------
 
+    // 💡 NEW: Filtering and Sorting Logic
+    const displayedCourses = allCourses
+        .filter(course => {
+            // Search Filter: Title or Description
+            const matchesSearch = 
+                course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.description.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            return matchesSearch;
+        })
+        .sort((a, b) => {
+            const titleA = a.title.toLowerCase();
+            const titleB = b.title.toLowerCase();
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+
+            if (sortOption === 'title_asc') {
+                return titleA < titleB ? -1 : titleA > titleB ? 1 : 0;
+            } else if (sortOption === 'title_dsc') {
+                return titleA > titleB ? -1 : titleA < titleB ? 1 : 0;
+            } else if (sortOption === 'date_asc') {
+                return dateA - dateB; // Oldest first
+            } else if (sortOption === 'date_dsc') {
+                return dateB - dateA; // Newest first (Default)
+            }
+            return 0;
+        });
+
     // --- SUB-COMPONENTS (Unchanged) ---
     const CourseNavbar = () => ( 
         <nav className="dashboard-navbar-neon">
             <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
                 {isSidebarOpen ? <FaTimes /> : <FaBars />}
             </button>
-            <div className="logo"><FaUniversity className="logo-icon"/> The Matrix Academy</div>
+            <div className="logo"><FaUniversity className="logo-icon"/>INFINITY  LMS</div>
             <div className="nav-profile-group">
                 <span className="student-name">
                     <FaUserCircle /> <strong>{name}</strong>({role})
@@ -324,6 +394,34 @@ const TeacherCourses = () => {
                         <FaPlusCircle /> Create New Course
                     </Link>
 
+                    {/* 💡 NEW: Filter/Search & Sort Bar */}
+                    <div style={neonStyles.filterBar}>
+                        <FaSearch style={neonStyles.searchIcon} />
+                        <input
+                            type="text"
+                            placeholder="Search courses by title or description..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={neonStyles.searchInput}
+                            disabled={isLoading}
+                        />
+
+                        {/* Sort Dropdown */}
+                        <select
+                            value={sortOption}
+                            onChange={(e) => setSortOption(e.target.value)}
+                            style={neonStyles.sortDropdown}
+                            title="Sort Courses"
+                            disabled={isLoading}
+                        >
+                            <option value="date_dsc">Date Created (Newest)</option>
+                            <option value="date_asc">Date Created (Oldest)</option>
+                            <option value="title_asc">Title (A-Z)</option>
+                            <option value="title_dsc">Title (Z-A)</option>
+                        </select>
+                    </div>
+                    {/* -------------------------------------- */}
+
                     {/* Loading/Error States */}
                     {isLoading && (
                         <div className="message-box success-neon">
@@ -339,12 +437,15 @@ const TeacherCourses = () => {
                     {/* Course List */}
                     {!isLoading && !error && (
                         <div className="course-list-grid">
-                            {courses.length === 0 ? (
+                            {displayedCourses.length === 0 ? (
                                 <div className="message-box secondary-neon" style={{gridColumn: '1 / -1'}}>
-                                    You haven't created any courses yet. Start with a new one!
+                                    {searchTerm ? 
+                                        'No courses found matching your search criteria.' :
+                                        "You haven't created any courses yet. Start with a new one!"
+                                    }
                                 </div>
                             ) : (
-                                courses.map(course => (
+                                displayedCourses.map(course => (
                                     <CourseCard 
                                         key={course.id} 
                                         course={course} 
@@ -386,7 +487,7 @@ const TeacherCourses = () => {
 };
 
 // ----------------------------------------------------------------------------------
-// --- HELPER COMPONENTS (Unchanged) ---
+// --- HELPER COMPONENTS (Unchanged - included for completeness) ---
 // ----------------------------------------------------------------------------------
 
 const CourseCard = ({ course, openEditModal, openDeleteModal, handleViewCourseDetails, isEditing, isDeleting, isNavigating, isAnyModalOpen }) => {

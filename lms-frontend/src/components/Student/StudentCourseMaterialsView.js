@@ -11,7 +11,7 @@ import './StudentDashboard.css'; // <-- CSS Import
 
 // --- Configuration ---
 // 🚀 QoL Update: Added explicit /api to base URL for clarity
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api'; 
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api'; 
 
 
 // ---------------------------------------------------------------------
@@ -38,7 +38,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -89,7 +89,7 @@ const MaterialCard = ({ material }) => {
                 <div className="material-info">
                     <h3 className="material-title">{material.title}</h3>
                     <p className="material-meta">
-                        Type: **{material.fileType || 'Link'}** | Uploaded By: **{material.Uploader?.name || 'Unknown'}** on **{formattedDate}**
+                        Type: <strong>{material.fileType || 'Link'}</strong> | Uploaded By: <strong>{material.Uploader?.name || 'Unknown'}</strong> on <strong>{formattedDate}</strong>
                     </p>
                 </div>
             </div>
@@ -205,7 +205,7 @@ const StudentCourseMaterialsView = () => {
             <main className={mainContentClass}>
                 <div className="error-state">
                     <h2 className="section-title-neon">Loading Failed</h2>
-                    <p className="error-message">Error: **{error}**</p>
+                    <p className="error-message">Error: <strong>{error}</strong></p>
                     <Link to={`/student/my-courses/${courseId}`} className="btn-action-neon" style={{ marginTop: '10px' }}>
                         <FaArrowLeft /> Back to Course Details
                     </Link>
@@ -226,12 +226,12 @@ const StudentCourseMaterialsView = () => {
                 <main className={mainContentClass}>
                     
                     <Link to={`/student/my-courses/${courseId}`} className="btn-action-neon" style={{ marginBottom: '20px' }}>
-                        <FaArrowLeft /> Back to **{courseTitle || 'Course'}** Details
+                        <FaArrowLeft /> Back to <strong>{courseTitle || 'Course'}</strong> Details
                     </Link>
 
                     <div className="welcome-banner dashboard-section">
                         <h1 className="section-title-neon">
-                            <FaFolderOpen /> Course Materials for **{courseTitle}**
+                            <FaFolderOpen /> Course Materials for <strong>{courseTitle}</strong>
                         </h1>
                         <p className="section-subtitle-neon">Access all shared files, links, and resources for this course.</p>
                     </div>

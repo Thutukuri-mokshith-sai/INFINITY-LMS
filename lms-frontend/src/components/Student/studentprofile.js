@@ -9,7 +9,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext"; 
 import './StudentDashboard.css'; 
 
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api'; // <-- IMPORTANT: Set your backend API URL
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api'; // <-- IMPORTANT: Set your backend API URL
 
 // --- Cloudinary Configuration ---
 const CLOUDINARY_CLOUD_NAME = 'dj0aqo53e'; // Your Cloud Name
@@ -70,7 +70,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}({useAuth().role})</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -232,7 +232,7 @@ const CloudinaryUploader = ({ onUploadSuccess, currentPhotoLink, isSaving, showM
             {uploadError && (
                 <div className="alert-neon-error upload-error"><FaExclamationTriangle /> {uploadError}</div>
             )}
-            <p className="upload-note">**Step 1: Upload Image. Step 2: Click "Save Changes" to commit the link.**</p>
+            <p className="upload-note"><strong>Step 1: Upload Image. Step 2: Click "Save Changes" to commit the link.</strong></p>
         </div>
     );
 };
@@ -466,7 +466,7 @@ const StudentProfileContent = () => {
                 {/* Conditional Alert for New Users */}
                 {hasNoProfileData && !isEditing && (
                     <div className="alert-neon-warning">
-                        <FaExclamationTriangle /> **Action Required:** No detailed profile found. Click "Add Profile Details" to fill in your academic information.
+                        <FaExclamationTriangle /> <strong>Action Required:</strong> No detailed profile found. Click "Add Profile Details" to fill in your academic information.
                     </div>
                 )}
                 
@@ -489,7 +489,7 @@ const StudentProfileContent = () => {
                             <form onSubmit={handleSave} className="edit-form">
                                 
                                 <EditField label="Full Name" name="name" value={formData.name} onChange={handleInputChange} readOnly={true} />
-                                <EditField label="Major" name="major" value={formData.major} onChange={handleInputChange} />
+                                <EditField label="Student clg ID" name="major" value={formData.major} onChange={handleInputChange} />
                                 <EditField label="GPA (0.0 - 10.0)" name="gpa" value={formData.gpa} type="number" onChange={handleInputChange} />
                                 <EditField label="Phone Number" name="phone_number" value={formData.phone_number} type="tel" onChange={handleInputChange} />
                                 
@@ -508,7 +508,7 @@ const StudentProfileContent = () => {
                         ) : (
                             <>
                                 <DisplayField icon={<FaUserCircle />} label="Full Name" value={formData.name} />
-                                <DisplayField icon={<FaGraduationCap />} label="Major" value={formData.major} />
+                                <DisplayField icon={<FaGraduationCap />} label="Student Clg ID" value={formData.major} />
                                 <DisplayField icon={<FaStar />} label="GPA" value={formData.gpa} />
                                 <DisplayField icon={<FaEnvelope />} label="Phone" value={formData.phone_number} />
                             </>

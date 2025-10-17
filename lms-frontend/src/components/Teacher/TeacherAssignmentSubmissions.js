@@ -11,7 +11,7 @@ import axios from 'axios';
 import './TeacherCourses.css';
 
 // --- API CONFIG ---
-const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-backend-foaq.onrender.com/api';
 
 // --- API FUNCTIONS ---
 
@@ -532,7 +532,7 @@ const TeacherAssignmentSubmissions = () => {
             <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
                 {isSidebarOpen ? <FaTimes /> : <FaBars />}
             </button>
-            <div className="logo"><FaUniversity className="logo-icon"/> The Matrix Academy</div>
+            <div className="logo"><FaUniversity className="logo-icon"/> INFINITY  LMS</div>
             <div className="nav-profile-group">
                 <span className="student-name">
                     <FaUserCircle /> <strong>{name}</strong> ({role})
@@ -746,7 +746,7 @@ const TeacherAssignmentSubmissions = () => {
                 <div className="modal-backdrop">
                     <div className="modal-content widget-card">
                         <h3 className="error-neon"><FaExclamationTriangle /> Confirm Deletion</h3>
-                        <p>Are you sure you want to delete the assignment **{assignment?.title}**?</p>
+                        <p>Are you sure you want to delete the assignment <strong>{assignment?.title}</strong>?</p>
                         <p className="error-neon" style={{ fontWeight: 'bold' }}>This action cannot be undone and will remove all associated student submissions!</p>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                             <button onClick={() => setShowDeleteConfirm(false)} className="btn-secondary-neon" disabled={modalLoading}>

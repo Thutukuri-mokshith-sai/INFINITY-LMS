@@ -10,7 +10,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import './TeacherDashboard.css'; // Assuming a separate CSS file for teachers
 
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api'; // <-- IMPORTANT: Set your backend API URL
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api'; // <-- IMPORTANT: Set your backend API URL
 
 // --- Cloudinary Configuration (Same as Student) ---
 const CLOUDINARY_CLOUD_NAME = 'dj0aqo53e'; // Your Cloud Name
@@ -71,7 +71,7 @@ const DashboardNavbar = ({ teacherName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
         <div className="nav-profile-group">
             <span className="teacher-name" onClick={onProfileToggle}><FaUserCircle /> {teacherName}({useAuth().role})</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -230,7 +230,7 @@ const CloudinaryUploader = ({ onUploadSuccess, currentPhotoLink, isSaving, showM
             {uploadError && (
                 <div className="alert-neon-error upload-error"><FaExclamationTriangle /> {uploadError}</div>
             )}
-            <p className="upload-note">**Step 1: Upload Image. Step 2: Click "Save Changes" to commit the link.**</p>
+            <p className="upload-note"><strong>Step 1: Upload Image. Step 2: Click "Save Changes" to commit the link.</strong></p>
         </div>
     );
 };
@@ -472,7 +472,7 @@ const TeacherProfileContent = () => {
                 {/* Conditional Alert for New Users */}
                 {hasNoProfileData && !isEditing && (
                     <div className="alert-neon-warning">
-                        <FaExclamationTriangle /> **Action Required:** No detailed profile found. Click "Add Profile Details" to fill in your professional information.
+                        <FaExclamationTriangle /> <strong>Action Required:</strong> No detailed profile found. Click "Add Profile Details" to fill in your professional information.
                     </div>
                 )}
 

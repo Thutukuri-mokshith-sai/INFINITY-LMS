@@ -1527,3 +1527,500 @@ fieldset:disabled {
         order: -1; /* Place sidebar above main content on mobile */
     }
 }
+/* ========================================================= */
+/* KEYFRAMES: EXTREME PULSE EFFECT */
+/* ========================================================= */
+/* The pulse now cycles through three distinct layers of glow */
+@keyframes neon-pulse-extreme {
+    0% {
+        /* Faint inner glow, medium outer glow */
+        box-shadow: 
+            0 0 5px var(--neon-secondary-light),    /* Inner bright layer */
+            0 0 15px var(--neon-secondary-glow),   /* Medium layer */
+            0 0 30px var(--neon-accent-glow);      /* Wide accent layer (Green) */
+    }
+    50% {
+        /* Brighter peak glow */
+        box-shadow: 
+            0 0 10px var(--neon-secondary-light),   /* Inner bright layer */
+            0 0 30px var(--neon-secondary-glow),   /* Medium layer (Peak) */
+            0 0 60px var(--neon-accent-glow);      /* Wide accent layer (Peak) */
+    }
+    100% {
+        /* Return to base glow */
+        box-shadow: 
+            0 0 5px var(--neon-secondary-light),
+            0 0 15px var(--neon-secondary-glow),
+            0 0 30px var(--neon-accent-glow);
+    }
+}
+
+/* ========================================================= */
+/* CHATBOT BUTTON STYLES: MAX BORDERS & HIGHLIGHTS */
+/* ========================================================= */
+.chatbot-fixed-btn-neon {
+    /* Positioning */
+    position: fixed;
+    top: 90px;
+    right: 25px; 
+    z-index: 1200; /* Max Z-index */
+    
+    /* Shape and Layout (Larger Size) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 75px; 
+    height: 75px;
+    border-radius: 50%;
+    
+    /* Colors and Double Border */
+    background-color: var(--background-dark); /* Dark center for contrast */
+    color: var(--neon-secondary); /* Icon starts bright cyan */
+    
+    /* 1. Primary Neon Border (thin) */
+    border: 3px solid var(--neon-secondary); 
+    
+    /* 2. Secondary Border (via outline/shadow) */
+    outline: 2px solid var(--neon-primary); /* Pink outer ring */
+    outline-offset: 2px; /* Space between border and outline */
+
+    cursor: pointer;
+    font-size: 2.2rem; 
+    
+    /* Transitions & Animation */
+    transition: all 0.4s ease-out; /* Slower transition for drama */
+    animation: neon-pulse-extreme 1.6s infinite alternate; /* The magic! */
+}
+
+/* Hover Effect: Max Highlight */
+.chatbot-fixed-btn-neon:hover {
+    /* Scale and Lift */
+    transform: scale(1.2) translateY(-2px); /* Lift off the screen slightly */
+    
+    /* **Highlight Change:** Robot icon becomes lighter to simulate energy surge */
+    color: var(--neon-secondary-light); 
+    
+    /* Extreme static glow on hover */
+    box-shadow: 
+        0 0 5px var(--neon-secondary-light),
+        0 0 40px var(--neon-secondary-glow),
+        0 0 100px var(--neon-accent-glow); /* Massive shadow on hover */
+        
+    /* Clear the animation on hover */
+    animation: none; 
+}
+
+/* Focus State */
+.chatbot-fixed-btn-neon:focus {
+    outline: 3px solid var(--neon-primary-light); /* Highlight the pink focus ring */
+    outline-offset: 1px;
+    box-shadow: 0 0 20px var(--neon-primary-glow);
+}
+/* --- 3. Toggle Functionality (Controlled by JS) --- */
+
+/* State when the chatbot window is OPEN */
+.chatbot-window-neon.open {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* When the window is open, we hide the main button by giving it a special class */
+.chatbot-fixed-btn-neon.hidden {
+    /* Use a non-disruptive way to hide it */
+    opacity: 0;
+    pointer-events: none; /* Crucial: Makes it unclickable when hidden */
+    transform: scale(0.5) translateX(50px);
+}
+/* ========================================================= */
+/* CHATBOT MODAL & WINDOW STYLES (MISSING FROM ORIGINAL CSS) */
+/* ========================================================= */
+
+/* Chatbot Modal Container - Full Screen Overlay */
+.chatbot-modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 2500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Main Chat Container */
+.chat-container {
+    width: 90%;
+    max-width: 700px;
+    height: 80vh;
+    max-height: 700px;
+    background: var(--card-bg);
+    border: 2px solid var(--neon-color);
+    border-radius: 15px;
+    box-shadow: 
+        0 0 20px var(--neon-color),
+        0 0 40px rgba(0, 255, 255, 0.4),
+        inset 0 0 10px rgba(0, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Chat Header */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: rgba(0, 0, 0, 0.6);
+    border-bottom: 2px solid var(--neon-color);
+    box-shadow: 0 2px 10px rgba(0, 255, 255, 0.3);
+}
+
+.chat-header .header-text {
+    font-size: 1.5rem;
+    color: var(--neon-color);
+    text-shadow: var(--neon-shadow-blue);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-header .modal-close-btn {
+    background: var(--red-neon);
+    color: var(--dark-bg);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px var(--red-neon);
+    font-size: 1.2rem;
+}
+
+.chat-header .modal-close-btn:hover {
+    box-shadow: var(--neon-shadow-red);
+    background-color: #ff8c69;
+    transform: rotate(90deg);
+}
+
+/* Chat History Area */
+.chat-history {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Custom Scrollbar for Chat History */
+.chat-history::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-history::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+    background: var(--neon-color);
+    border-radius: 10px;
+    box-shadow: 0 0 5px var(--neon-color);
+}
+
+.chat-history::-webkit-scrollbar-thumb:hover {
+    background: #33ffff;
+}
+
+/* Initial Welcome Message */
+.initial-message {
+    text-align: center;
+    color: var(--highlight-green);
+    padding: 30px 20px;
+    font-size: 1.1rem;
+    font-style: italic;
+    border: 1px dashed rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* Message Bubbles */
+.message {
+    padding: 12px 18px;
+    border-radius: 12px;
+    max-width: 75%;
+    word-wrap: break-word;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* User Message (Right-aligned) */
+.user-message {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--neon-color), #33ffff);
+    color: var(--dark-bg);
+    font-weight: 500;
+    border: 1px solid var(--neon-color);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    margin-left: auto;
+}
+
+/* AI Message (Left-aligned) */
+.ai-message {
+    align-self: flex-start;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--light-text);
+    border: 1px solid var(--highlight-green);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+    margin-right: auto;
+}
+
+/* Loading Message (Thinking...) */
+.loading-message {
+    background: rgba(255, 165, 0, 0.15);
+    color: #ffaa00;
+    border: 1px solid #ffaa00;
+    box-shadow: 0 0 8px rgba(255, 165, 0, 0.3);
+    font-style: italic;
+    animation: pulse 1.5s infinite;
+}
+
+/* Chat Input Area */
+.chat-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border-top: 2px solid var(--neon-color);
+    align-items: center;
+}
+
+/* Text Input Field */
+.text-input {
+    flex-grow: 1;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--neon-color);
+    border-radius: 8px;
+    color: var(--light-text);
+    font-size: 1rem;
+    box-shadow: inset 0 0 5px rgba(0, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--highlight-green);
+    box-shadow: 
+        inset 0 0 5px var(--highlight-green),
+        0 0 8px var(--highlight-green);
+}
+
+.text-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #555;
+}
+
+.text-input::placeholder {
+    color: rgba(236, 253, 245, 0.4);
+}
+
+/* Mic and Stop Buttons (Placeholder) */
+.mic-button,
+.stop-button {
+    padding: 12px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid var(--neon-color);
+    border-radius: 8px;
+    color: var(--neon-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.mic-button:hover:not(:disabled),
+.stop-button:hover:not(:disabled) {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 10px var(--neon-color);
+}
+
+.mic-button:disabled,
+.stop-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #555;
+}
+
+/* Send Button */
+.send-button {
+    padding: 12px 20px;
+    background: var(--highlight-green);
+    color: var(--dark-bg);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--secondary-shadow);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.send-button:hover:not(:disabled) {
+    filter: brightness(1.15);
+    box-shadow: 0 0 15px var(--highlight-green);
+    transform: translateY(-2px);
+}
+
+.send-button:disabled {
+    background: #555;
+    color: #999;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+/* ========================================================= */
+/* CHATBOT FLOATING BUTTON STYLES */
+/* ========================================================= */
+
+.chatbot-floating-btn {
+    /* Position */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    
+    /* Layout & Shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    border-radius: 8px;
+    
+    /* Colors & Borders */
+    color: #fff;
+    background-color: transparent;
+    border: 2px solid #00F0FF;
+    
+    /* Neon Effects */
+    box-shadow: 
+        0 0 10px #00F0FF, 
+        0 0 20px rgba(0, 240, 255, 0.6), 
+        inset 0 0 5px #00F0FF;
+    
+    /* Typography */
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    
+    /* Interaction */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chatbot-floating-btn:hover {
+    background-color: rgba(0, 240, 255, 0.1);
+    box-shadow: 
+        0 0 15px #00F0FF, 
+        0 0 30px rgba(0, 240, 255, 0.8), 
+        inset 0 0 8px #00F0FF;
+    transform: translateY(-3px);
+}
+
+.chatbot-floating-btn:active {
+    transform: translateY(-1px);
+}
+
+/* ========================================================= */
+/* ANIMATIONS */
+/* ========================================================= */
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* ========================================================= */
+/* RESPONSIVE ADJUSTMENTS */
+/* ========================================================= */
+
+@media (max-width: 768px) {
+    .chat-container {
+        width: 95%;
+        height: 90vh;
+        max-height: none;
+    }
+    
+    .message {
+        max-width: 85%;
+    }
+    
+    .chat-input-area {
+        padding: 15px;
+        gap: 8px;
+    }
+    
+    .mic-button,
+    .stop-button {
+        padding: 10px;
+        font-size: 1rem;
+    }
+    
+    .send-button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-header .header-text {
+        font-size: 1.2rem;
+    }
+    
+    .text-input {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+    
+    .chatbot-floating-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}

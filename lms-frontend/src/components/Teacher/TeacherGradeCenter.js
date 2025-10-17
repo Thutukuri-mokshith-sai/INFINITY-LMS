@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 
 // --- Configuration ---
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api/gradecenter'; 
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api/gradecenter'; 
 
 // --- LAYOUT AND MODAL COMPONENTS (Assuming these remain the same) ---
 
@@ -21,7 +21,7 @@ const TeacherDashboardNavbar = ({ toggleSidebar, isSidebarOpen, name, role, hand
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
         <Link to="/teacher" className="logo">
-            <FaUniversity className="logo-icon"/> The Matrix Academy
+            <FaUniversity className="logo-icon"/> INFINITY  LMS
         </Link>
         <div className="nav-profile-group">
             <span className="student-name">
@@ -96,12 +96,12 @@ const GradeModal = ({ submission, onClose, onSave }) => {
                     <FaGraduationCap /> {status === 'PENDING' ? 'Grade Submission' : 'Edit Grade'}
                 </h2>
                 <p className="subtitle-neon">
-                    **{assignmentTitle}** from **{studentName}** ({courseTitle})
+                    <strong>{assignmentTitle}</strong> from <strong>{studentName}</strong> ({courseTitle})
                 </p>
 
                 {status === 'GRADED' && !canEdit && (
                     <div className="alert alert-danger-neon">
-                        <FaExclamationTriangle /> **Read Only:** Grading window closed (24 hours exceeded).
+                        <FaExclamationTriangle /> <strong>Read Only:</strong> Grading window closed (24 hours exceeded).
                     </div>
                 )}
                 

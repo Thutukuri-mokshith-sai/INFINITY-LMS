@@ -1,20 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import {
     FaUniversity, FaBookOpen, FaUserCircle, FaSignOutAlt, FaBars, FaTimes,
-    FaListAlt, FaStar, FaArrowRight, FaClock, FaSpinner, FaCalendarAlt
+    FaListAlt, FaStar, FaArrowRight, FaClock, FaSpinner, FaCalendarAlt, FaSearch
 } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import './StudentDashboard.css'; // Assuming shared styles
 import { useAuth } from "../../context/AuthContext";
 
 // --- Configuration ---
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
+
+// --- INLINE STYLES FOR NEW/ENHANCED COMPONENTS (Copy from previous file) ---
+const neonStyles = {
+    filterBar: {
+        display: 'flex',
+        gap: '15px',
+        marginBottom: '30px',
+        padding: '15px',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        borderRadius: '10px',
+        border: '1px solid #0ff',
+        boxShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
+        alignItems: 'center',
+    },
+    searchInput: {
+        flexGrow: 1,
+        padding: '10px 15px',
+        borderRadius: '5px',
+        border: '1px solid #0ff',
+        backgroundColor: '#001a1a',
+        color: '#fff',
+        fontSize: '16px',
+        boxShadow: '0 0 5px rgba(0, 255, 255, 0.3)',
+        outline: 'none',
+        transition: 'border-color 0.3s, box-shadow 0.3s',
+        minWidth: '250px',
+    },
+    sortDropdown: {
+        padding: '10px 15px',
+        borderRadius: '5px',
+        border: '1px solid #39ff14',
+        backgroundColor: '#001a1a',
+        color: '#39ff14',
+        fontSize: '16px',
+        boxShadow: '0 0 5px rgba(57, 255, 20, 0.5)',
+        cursor: 'pointer',
+        appearance: 'none',
+    },
+    searchIcon: {
+        color: '#0ff',
+        fontSize: '18px',
+    },
+};
 
 // ---------------------------------------------------------------------
-// --- REUSED COMPONENTS (Copy/Paste from EnrollCourses for consistency) ---
+// --- REUSED COMPONENTS ---
 // ---------------------------------------------------------------------
 
-// Placeholder for Profile Modal
 const ProfileModal = ({ authData, onClose }) => {
     const { name, logout } = authData;
     return (
@@ -35,7 +77,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -90,6 +132,7 @@ const EnrolledCourseCard = ({ course }) => {
 /**
  * MyCourses Component
  * Fetches and displays a list of courses the student is currently enrolled in.
+ * NOW INCLUDES SEARCH AND SORT.
  */
 const MyCourses = () => {
     const auth = useAuth();
@@ -101,9 +144,14 @@ const MyCourses = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     
-    const [enrolledCourses, setEnrolledCourses] = useState([]);
+    const [allEnrolledCourses, setAllEnrolledCourses] = useState([]); // Renamed for clarity
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // NEW STATE for search/filter and sorting
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('enroll_date_dsc'); // Default: Newest enrollment first
+
 
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
     const toggleProfile = () => setIsProfileOpen(prev => !prev);
@@ -144,7 +192,7 @@ const MyCourses = () => {
                 const data = await response.json();
                 
                 // The backend response structure: { data: { courses: [...] } }
-                setEnrolledCourses(data.data.courses || []);
+                setAllEnrolledCourses(data.data.courses || []);
 
             } catch (err) {
                 console.error("Enrolled course fetch error:", err);
@@ -157,6 +205,38 @@ const MyCourses = () => {
         fetchEnrolledCourses();
     }, [token, navigate]);
 
+
+    // Filter and Sort Courses Logic
+    const displayedCourses = allEnrolledCourses
+        .filter(course => {
+            // Search Filter: Title or Description
+            const matchesSearch = 
+                course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.description.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            return matchesSearch;
+        })
+        .sort((a, b) => {
+            // Helper function to safely get enrollment date for sorting
+            const getDate = (course) => course.Enrollment?.enrollmentDate ? new Date(course.Enrollment.enrollmentDate).getTime() : 0;
+
+            const titleA = a.title.toLowerCase();
+            const titleB = b.title.toLowerCase();
+            const dateA = getDate(a);
+            const dateB = getDate(b);
+
+
+            if (sortOption === 'title_asc') {
+                return titleA < titleB ? -1 : titleA > titleB ? 1 : 0;
+            } else if (sortOption === 'title_dsc') {
+                return titleA > titleB ? -1 : titleA < titleB ? 1 : 0;
+            } else if (sortOption === 'enroll_date_asc') {
+                return dateA - dateB; // Oldest first
+            } else if (sortOption === 'enroll_date_dsc') {
+                return dateB - dateA; // Newest first (Default)
+            }
+            return 0;
+        });
 
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
 
@@ -192,6 +272,32 @@ const MyCourses = () => {
 
                     <section className="dashboard-section core-section">
                         <h2 className="section-title-neon">Your Active Enrollments</h2>
+
+                        {/* Filter/Search & Sort Bar (Using inline styles) */}
+                        <div style={neonStyles.filterBar}>
+                            <FaSearch style={neonStyles.searchIcon} />
+                            <input
+                                type="text"
+                                placeholder="Search courses by title or description..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={neonStyles.searchInput}
+                            />
+
+                            {/* Sort Dropdown */}
+                            <select
+                                value={sortOption}
+                                onChange={(e) => setSortOption(e.target.value)}
+                                style={neonStyles.sortDropdown}
+                                title="Sort Courses"
+                            >
+                                <option value="enroll_date_dsc">Enroll Date (Newest)</option>
+                                <option value="enroll_date_asc">Enroll Date (Oldest)</option>
+                                <option value="title_asc">Title (A-Z)</option>
+                                <option value="title_dsc">Title (Z-A)</option>
+                            </select>
+                        </div>
+                        {/* --- */}
                         
                         {isLoading && (
                             <div className="loading-state">
@@ -207,9 +313,9 @@ const MyCourses = () => {
                             </div>
                         )}
 
-                        {!isLoading && !error && enrolledCourses.length > 0 ? (
+                        {!isLoading && !error && displayedCourses.length > 0 ? (
                             <div className="courses-grid">
-                                {enrolledCourses.map(course => (
+                                {displayedCourses.map(course => (
                                     <EnrolledCourseCard 
                                         key={course.id}
                                         course={course}
@@ -218,7 +324,7 @@ const MyCourses = () => {
                             </div>
                         ) : (!isLoading && !error && (
                             <div className="widget-card widget-empty-state">
-                                <p>You are not currently enrolled in any courses.</p>
+                                <p>No courses found matching your criteria. You might not be enrolled in any yet!</p>
                                 <Link to="/student/courses" className="btn-action-neon">
                                     <FaUniversity /> Enroll in a New Course
                                 </Link>

@@ -4,22 +4,15 @@ import {
     FaUniversity, FaBookOpen, FaUserCircle, FaSignOutAlt, FaBars, FaTimes,
     FaListAlt, FaStar, FaArrowLeft, FaClock, FaSpinner, FaExclamationCircle,
     FaFileSignature, FaCheckCircle, FaHourglassHalf, FaClipboardCheck,
-    FaPaperclip, FaPlus, FaTrash, FaLink, FaCommentDots, FaRegFilePdf, FaEdit, FaRegTrashAlt
+    FaPaperclip, FaPlus, FaTrash, FaLink, FaCommentDots, FaRegFilePdf, FaEdit, 
+    FaRegTrashAlt, FaShieldAlt, FaExclamationTriangle, FaCheckDouble
 } from 'react-icons/fa';
 import { useAuth } from "../../context/AuthContext";
-// Assuming the shared styles and reusable components are accessible
 import './StudentDashboard.css';
 
-// --- Configuration ---
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
-
-// --- CLOUDINARY CONFIGURATION (REPLACE WITH YOUR ACTUAL CREDENTIALS) ---
-const CLOUD_NAME = 'duzmfqbkd'; // <-- REPLACE THIS
-const UPLOAD_PRESET = 'pdf_upload';     // <-- REPLACE THIS
-
-// ---------------------------------------------------------------------
-// --- REUSED DASHBOARD COMPONENTS (Keep these imports or ensure they are imported from a shared file) ---
-// ---------------------------------------------------------------------
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
+const CLOUD_NAME = 'duzmfqbkd';
+const UPLOAD_PRESET = 'pdf_upload';
 
 const ProfileModal = ({ authData, onClose }) => {
     const { name, logout } = authData;
@@ -41,7 +34,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" /> INFINITY LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -63,13 +56,6 @@ const DashboardSidebar = ({ isOpen }) => (
     </aside>
 );
 
-// ---------------------------------------------------------------------
-// --- HELPER FUNCTION: CLOUDINARY UPLOAD ---
-// ---------------------------------------------------------------------
-
-/**
- * Uploads a local file (PDF) to Cloudinary.
- */
 const uploadFileToCloudinary = async (file) => {
     if (!CLOUD_NAME || !UPLOAD_PRESET) {
         throw new Error("Cloudinary configuration is missing. Cannot upload file.");
@@ -94,7 +80,7 @@ const uploadFileToCloudinary = async (file) => {
         return { 
             resourceLink: data.secure_url, 
             title: file.name,
-            fileType: 'PDF' // Explicitly set type for server-side
+            fileType: 'PDF'
         };
     } else {
         console.error("Cloudinary response:", data);
@@ -102,16 +88,12 @@ const uploadFileToCloudinary = async (file) => {
     }
 };
 
-// ---------------------------------------------------------------------
-// --- MAIN COMPONENT: StudentAssignmentView ---
-// ---------------------------------------------------------------------
-
 const initialResource = { 
     title: '', 
     resourceLink: '', 
     fileType: 'Link', 
     file: null, 
-    inputType: 'Link' // 'Link' or 'File'
+    inputType: 'Link'
 };
 
 const StudentAssignmentView = () => {
@@ -139,8 +121,6 @@ const StudentAssignmentView = () => {
     const [deleteError, setDeleteError] = useState(null);
     const [deleteSuccess, setDeleteSuccess] = useState(null);
 
-
-    // --- Submission Form State ---
     const [studentComment, setStudentComment] = useState('');
     const [resources, setResources] = useState([initialResource]);
 
@@ -152,37 +132,31 @@ const StudentAssignmentView = () => {
         navigate('/login');
     };
 
-    // --- Resource Management Functions ---
     const handleResourceChange = (index, field, value) => {
         const newResources = resources.map((res, i) => {
             if (i === index) {
-                // If updating a file input, store the file object and its name/type
                 if (field === 'file') {
                     const file = value;
                     if (file && file.type === 'application/pdf') {
                         return { 
                             ...res, 
                             file: file,
-                            title: file.name, // Use file name as title
-                            resourceLink: '', // Clear old link
+                            title: file.name,
+                            resourceLink: '',
                             fileType: 'PDF'
                         };
                     } else if (file) {
                         alert("Please select a valid PDF file.");
                         return { ...res, file: null, title: '', resourceLink: '' };
                     } else {
-                        // File input was cleared
                         return { ...res, file: null, title: '', resourceLink: '' };
                     }
                 }
                 
-                // If changing the input type
                 if (field === 'inputType') {
-                    // Reset resource state when changing type
                     return { ...initialResource, inputType: value };
                 }
 
-                // Normal text input update (for Link type)
                 return { ...res, [field]: value };
             }
             return res;
@@ -198,7 +172,6 @@ const StudentAssignmentView = () => {
         setResources(resources.filter((_, i) => i !== index));
     };
 
-    // --- API Fetch Logic ---
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
@@ -212,7 +185,6 @@ const StudentAssignmentView = () => {
             }
 
             try {
-                // 1. Fetch Assignment Details
                 const assignmentResponse = await fetch(`${API_BASE_URL}/assignments/${assignmentId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -224,7 +196,6 @@ const StudentAssignmentView = () => {
                 const fetchedAssignment = assignmentData.data.assignment;
                 setAssignment(fetchedAssignment);
                 
-                // 2. Fetch Student's Submission Status
                 const submissionResponse = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/my-submission`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -234,15 +205,14 @@ const StudentAssignmentView = () => {
                     const fetchedSubmission = submissionData.data.submission;
                     setSubmission(fetchedSubmission);
 
-                    // Pre-fill form with existing submission data for resubmission
                     setStudentComment(fetchedSubmission.studentComment || '');
                     if (fetchedSubmission.SubmittedResources && fetchedSubmission.SubmittedResources.length > 0) {
                         setResources(fetchedSubmission.SubmittedResources.map(res => ({
                             title: res.title || '',
                             resourceLink: res.resourceLink || '',
                             fileType: res.fileType || 'Link',
-                            file: null, // Always null for existing resources
-                            inputType: 'Link' // Existing resources are always treated as links/URLs
+                            file: null,
+                            inputType: 'Link'
                         })));
                     } else {
                         setResources([initialResource]);
@@ -266,16 +236,13 @@ const StudentAssignmentView = () => {
         fetchData();
     }, [assignmentId, token, navigate]);
 
-
-    // --- Unified Submission/Update Handler ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmissionError(null);
         setSubmissionSuccess(null);
         setIsSubmitting(true);
-        setDeleteSuccess(null); 
+        setDeleteSuccess(null);
 
-        // 1. Validate and Prepare Resources for Upload/Submission
         const resourcesToUpload = resources.filter(r => r.inputType === 'File' && r.file);
         const resourcesToSubmit = resources.filter(r => r.inputType === 'Link' && r.resourceLink.trim() !== '');
         
@@ -288,32 +255,27 @@ const StudentAssignmentView = () => {
         let finalSubmissionResources = [];
 
         try {
-            // 2. Cloudinary Upload for PDF Files
             const uploadPromises = resourcesToUpload.map(r => uploadFileToCloudinary(r.file));
             const uploadedResources = await Promise.all(uploadPromises);
             
-            // Combine already-ready link resources and newly uploaded resources
             finalSubmissionResources = [...resourcesToSubmit, ...uploadedResources];
             
-            // 3. Determine API Method 
             const isDue = new Date(assignment.dueDate);
             const isPastDue = new Date() > isDue;
             
             let method = 'POST';
-            let url = `${API_BASE_URL}/assignments/${assignmentId}/submit`; // Initial/Late Resubmission
+            let url = `${API_BASE_URL}/assignments/${assignmentId}/submit`;
             let successMessage = submission ? 'Assignment successfully resubmitted.' : 'Assignment successfully submitted.';
             
-            // Use PATCH for strict pre-due date updates
             if (submission && !isPastDue && submission.grade === null) {
                 method = 'PATCH';
                 url = `${API_BASE_URL}/assignments/${assignmentId}/my-submission`;
                 successMessage = 'Submission successfully updated.';
             }
 
-            // 4. Send Data to Backend
             const payload = {
                 studentComment: studentComment,
-                resources: finalSubmissionResources // Only include title, resourceLink, fileType
+                resources: finalSubmissionResources
             };
 
             const response = await fetch(url, {
@@ -331,39 +293,37 @@ const StudentAssignmentView = () => {
                 throw new Error(data.message || 'Failed to process submission.');
             }
 
-           // ✅ Fetch latest submission details after successful submission
-try {
-    const refreshResponse = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/my-submission`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-    });
+            try {
+                const refreshResponse = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/my-submission`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
 
-    if (!refreshResponse.ok) throw new Error("Failed to fetch updated submission data.");
+                if (!refreshResponse.ok) throw new Error("Failed to fetch updated submission data.");
 
-    const refreshedData = await refreshResponse.json();
-    const latestSubmission = refreshedData.data.submission;
+                const refreshedData = await refreshResponse.json();
+                const latestSubmission = refreshedData.data.submission;
 
-    setSubmission(latestSubmission);
-    setSubmissionSuccess(successMessage);
-    setSubmissionError(null);
+                setSubmission(latestSubmission);
+                setSubmissionSuccess(successMessage);
+                setSubmissionError(null);
 
-    // Refresh form fields with new data
-    setStudentComment(latestSubmission.studentComment || '');
-    if (latestSubmission.SubmittedResources && latestSubmission.SubmittedResources.length > 0) {
-        setResources(latestSubmission.SubmittedResources.map(res => ({
-            title: res.title || '',
-            resourceLink: res.resourceLink || '',
-            fileType: res.fileType || 'Link',
-            file: null,
-            inputType: 'Link'
-        })));
-    } else {
-        setResources([initialResource]);
-    }
+                setStudentComment(latestSubmission.studentComment || '');
+                if (latestSubmission.SubmittedResources && latestSubmission.SubmittedResources.length > 0) {
+                    setResources(latestSubmission.SubmittedResources.map(res => ({
+                        title: res.title || '',
+                        resourceLink: res.resourceLink || '',
+                        fileType: res.fileType || 'Link',
+                        file: null,
+                        inputType: 'Link'
+                    })));
+                } else {
+                    setResources([initialResource]);
+                }
 
-} catch (fetchErr) {
-    console.warn("Could not refresh submission after save:", fetchErr);
-    setSubmissionSuccess(successMessage + " (but failed to refresh latest data)");
-}
+            } catch (fetchErr) {
+                console.warn("Could not refresh submission after save:", fetchErr);
+                setSubmissionSuccess(successMessage + " (but failed to refresh latest data)");
+            }
 
         } catch (err) {
             console.error("Submission error:", err);
@@ -373,7 +333,6 @@ try {
         }
     };
     
-    // --- Delete Handler ---
     const handleDeleteSubmission = async () => {
         if (!window.confirm("Are you sure you want to delete your submission? This action cannot be undone.")) return;
 
@@ -393,11 +352,9 @@ try {
             const responseBody = response.status === 204 ? {} : await response.json();
 
             if (!response.ok) {
-                 // Check for 403 (due date passed) or 404 (not found)
-                 throw new Error(responseBody.message || 'Failed to delete submission.');
+                throw new Error(responseBody.message || 'Failed to delete submission.');
             }
 
-            // Success: Remove local submission state and reset form
             setSubmission(null);
             setStudentComment('');
             setResources([initialResource]);
@@ -411,9 +368,44 @@ try {
         }
     };
 
+    const getSimilarityStatus = () => {
+        if (!submission) return null;
+        
+        const similarityScore = submission.maxSimilarityScore;
+        const copiedFromId = submission.copiedFromStudentId;
+        
+        if (similarityScore === null || similarityScore === undefined) {
+            return {
+                checked: false,
+                message: "Similarity check pending",
+                icon: <FaHourglassHalf />,
+                class: "pending"
+            };
+        }
+        
+        if (copiedFromId) {
+            return {
+                checked: true,
+                flagged: true,
+                score: similarityScore,
+                message: `High similarity detected: ${Math.round(similarityScore * 100)}%`,
+                icon: <FaExclamationTriangle />,
+                class: "flagged"
+            };
+        }
+        
+        return {
+            checked: true,
+            flagged: false,
+            score: similarityScore,
+            message: `Content verified unique: ${Math.round(similarityScore * 100)}% max similarity`,
+            icon: <FaCheckDouble />,
+            class: "verified"
+        };
+    };
+
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
 
-    // --- Helper for Status Display ---
     const getSubmissionStatus = () => {
         if (!assignment) return { status: 'Loading...', icon: <FaSpinner className="spinner" /> };
         
@@ -443,47 +435,45 @@ try {
         return { status: 'Pending Submission', class: 'pending', icon: <FaHourglassHalf /> };
     };
 
-    // --- Loading and Error States ---
     if (isLoading) {
-         return (
-             <div className="app-container">
-                    <DashboardNavbar studentName={studentName} onLogout={handleLogout} onProfileToggle={toggleProfile} onSidebarToggle={toggleSidebar} isSidebarOpen={isSidebarOpen}/>
-                    <DashboardSidebar isOpen={isSidebarOpen} />
-                    <main className={mainContentClass}>
-                        <div className="loading-state">
-                            <FaSpinner className="spinner" />
-                            <p>Loading assignment details...</p>
-                        </div>
-                    </main>
-             </div>
-         );
+        return (
+            <div className="app-container">
+                <DashboardNavbar studentName={studentName} onLogout={handleLogout} onProfileToggle={toggleProfile} onSidebarToggle={toggleSidebar} isSidebarOpen={isSidebarOpen}/>
+                <DashboardSidebar isOpen={isSidebarOpen} />
+                <main className={mainContentClass}>
+                    <div className="loading-state">
+                        <FaSpinner className="spinner" />
+                        <p>Loading assignment details...</p>
+                    </div>
+                </main>
+            </div>
+        );
     }
 
     if (error || !assignment) {
-         return (
-             <div className="app-container">
-                    <DashboardNavbar studentName={studentName} onLogout={handleLogout} onProfileToggle={toggleProfile} onSidebarToggle={toggleSidebar} isSidebarOpen={isSidebarOpen}/>
-                    <DashboardSidebar isOpen={isSidebarOpen} />
-                    <main className={mainContentClass}>
-                        <div className="error-state">
-                            <p>Error: {error || `Assignment ID ${assignmentId} not found.`}</p>
-                            <Link to="/student/my-courses" className="btn-action-neon" style={{ marginTop: '10px' }}>
-                                <FaArrowLeft /> Back to My Courses
-                            </Link>
-                        </div>
-                    </main>
-             </div>
-         );
+        return (
+            <div className="app-container">
+                <DashboardNavbar studentName={studentName} onLogout={handleLogout} onProfileToggle={toggleProfile} onSidebarToggle={toggleSidebar} isSidebarOpen={isSidebarOpen}/>
+                <DashboardSidebar isOpen={isSidebarOpen} />
+                <main className={mainContentClass}>
+                    <div className="error-state">
+                        <p>Error: {error || `Assignment ID ${assignmentId} not found.`}</p>
+                        <Link to="/student/my-courses" className="btn-action-neon" style={{ marginTop: '10px' }}>
+                            <FaArrowLeft /> Back to My Courses
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        );
     }
     
     const status = getSubmissionStatus();
+    const similarityStatus = getSimilarityStatus();
     const isDue = new Date(assignment.dueDate);
     const isPastDue = new Date() > isDue;
-    // Can delete if submitted, not graded, and before deadline
-    const canDelete = submission && !isPastDue && submission.grade === null; 
+    const canDelete = submission && !isPastDue && submission.grade === null;
     const isSubmittedAndGraded = submission && submission.grade !== null;
 
-    // --- Main Render ---
     return (
         <>
             {isProfileOpen && (
@@ -506,7 +496,6 @@ try {
 
                     <div className="assignment-view-grid">
                         
-                        {/* -------------------- Column 1: Assignment Details -------------------- */}
                         <section className="dashboard-section assignment-details">
                             <h2 className="section-title-neon">Instructions & Resources</h2>
                             <div className="widget-card">
@@ -536,12 +525,11 @@ try {
                                 )}
                             </div>
 
-                            {/* Teacher Feedback Card (Only visible if graded) */}
                             {isSubmittedAndGraded && (
                                 <div className="widget-card feedback-card">
                                     <h2 className="section-title-neon" style={{ color: '#87cefa' }}><FaCommentDots /> Teacher Feedback</h2>
                                     <p className="status-detail">
-                                        Your assignment has been **GRADED**. Check the Grades tab for your score.
+                                        Your assignment has been <strong>GRADED</strong>. Check the Grades tab for your score.
                                     </p>
                                     <div className="feedback-content">
                                         <h4 style={{ color: '#00ff00', marginTop: '10px' }}>Feedback Notes:</h4>
@@ -553,11 +541,9 @@ try {
 
                         </section>
 
-                        {/* -------------------- Column 2: Submission Area -------------------- */}
                         <section className="dashboard-section submission-area">
                             <h2 className="section-title-neon">Your Submission Status</h2>
                             
-                            {/* Submission Status Box */}
                             <div className={`widget-card status-box status-${status.class}`}>
                                 <div className="status-indicator">
                                     {status.icon} 
@@ -570,7 +556,39 @@ try {
                                     }
                                 </p>
 
-                                {/* Delete Button - Visible only if criteria met */}
+                                {similarityStatus && (
+                                    <div className={`similarity-check-box similarity-${similarityStatus.class}`} style={{ 
+                                        marginTop: '15px', 
+                                        padding: '12px', 
+                                        border: '1px solid rgba(255,255,255,0.2)', 
+                                        borderRadius: '8px',
+                                        background: similarityStatus.flagged ? 'rgba(255, 69, 0, 0.1)' : 'rgba(0, 255, 0, 0.05)'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                            <FaShieldAlt style={{ fontSize: '1.3em', color: similarityStatus.flagged ? '#ff4500' : '#00ff00' }} />
+                                            <strong style={{ color: similarityStatus.flagged ? '#ff6347' : '#87cefa' }}>
+                                                Plagiarism Check
+                                            </strong>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {similarityStatus.icon}
+                                            <span style={{ color: similarityStatus.flagged ? '#ff6347' : '#00ff00' }}>
+                                                {similarityStatus.message}
+                                            </span>
+                                        </div>
+                                        {similarityStatus.checked && !similarityStatus.flagged && (
+                                            <p style={{ fontSize: '0.85em', marginTop: '8px', color: 'rgba(255,255,255,0.7)' }}>
+                                                Your work has been checked and appears to be original.
+                                            </p>
+                                        )}
+                                        {similarityStatus.flagged && (
+                                            <p style={{ fontSize: '0.85em', marginTop: '8px', color: '#ff6347' }}>
+                                                ⚠️ Your teacher has been notified. Please contact them if you have concerns.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 {canDelete && (
                                     <div className="delete-submission-area">
                                         <button 
@@ -586,7 +604,6 @@ try {
                                     </div>
                                 )}
 
-                                {/* Display submitted resources if submission exists */}
                                 {submission && submission.SubmittedResources && submission.SubmittedResources.length > 0 && (
                                     <div style={{ marginTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px' }}>
                                         <h4>Submitted Resources:</h4>
@@ -604,7 +621,6 @@ try {
                                 )}
                             </div>
 
-                            {/* Submission/Resubmission Form */}
                             <form className="widget-card submission-form" onSubmit={handleSubmit}>
                                 <h3 className="section-title-neon form-title">
                                     {submission ? (!isPastDue ? <FaEdit /> : <FaCheckCircle />) : <FaFileSignature />}
@@ -619,13 +635,11 @@ try {
                                 {isPastDue && !isSubmittedAndGraded && <p className="warning-message-neon">WARNING: Submitting now will mark your work as LATE.</p>}
                                 {isSubmittedAndGraded && <p className="info-message-neon">This assignment has been graded and cannot be resubmitted.</p>}
                                 
-                                {/* Resource Inputs */}
                                 <fieldset disabled={isSubmittedAndGraded}>
                                     <label className="form-label-neon">Submission Resources (Links or PDFs)</label>
                                     <div className="resource-input-group">
                                         {resources.map((res, index) => (
                                             <div key={index} className="resource-item">
-                                                {/* Resource Type Selector */}
                                                 <select 
                                                     value={res.inputType}
                                                     onChange={(e) => handleResourceChange(index, 'inputType', e.target.value)}
@@ -672,7 +686,6 @@ try {
                                                             required={res.inputType === 'File' && !res.file}
                                                             style={{ 
                                                                 flexGrow: 1, 
-                                                                // If a file is selected, show a clickable placeholder to clear it or the actual input
                                                                 display: res.file ? 'none' : 'block' 
                                                             }} 
                                                         />
@@ -701,7 +714,6 @@ try {
                                         </button>
                                     </div>
 
-                                    {/* Student Comment Input */}
                                     <label htmlFor="studentComment" className="form-label-neon">Comment for Teacher (Optional)</label>
                                     <textarea
                                         id="studentComment"

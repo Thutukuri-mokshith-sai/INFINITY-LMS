@@ -12,7 +12,7 @@ import axios from 'axios';
 import './TeacherCourses.css'; 
 
 // --- API CONFIG ---
-const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-backend-foaq.onrender.com/api';
 
 // --- CLOUDINARY CONFIG (Use environment variables in a real app) ---
 const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'duzmfqbkd'; // REPLACE THIS
@@ -453,48 +453,6 @@ const TeacherCourseDetails = () => {
     const handleLogout = logout;
 
     // --- UI COMPONENTS ---
-
-    const CourseNavbar = () => (
-        <nav className="dashboard-navbar-neon">
-            <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
-                {isSidebarOpen ? <FaTimes /> : <FaBars />}
-            </button>
-            <div className="logo"><FaUniversity className="logo-icon"/> The Matrix Academy</div>
-            <div className="nav-profile-group">
-                <span className="student-name">
-                    <FaUserCircle /> <strong>{currentUserName}</strong>({role})
-                </span>
-                <button className="btn-logout-neon" onClick={handleLogout}>
-                    <FaSignOutAlt /> Logout
-                </button>
-            </div>
-        </nav>
-    );
-
-    const CourseSidebar = () => (
-        <aside className={`dashboard-sidebar-neon ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
-            <div className="sidebar-header">TEACHER MENU</div>
-            <nav className="sidebar-nav">
-                <Link to="/teacher" className="nav-link">
-                    <FaListAlt /> <span className="link-text">Dashboard</span>
-                </Link>
-                <Link to="/teacher/courses" className="nav-link">
-                    <FaChalkboardTeacher /> <span className="link-text">My Courses</span>
-                </Link>
-                <Link to="/teacher/grading" className="nav-link">
-                    <FaGraduationCap /> <span className="link-text">Grading Center</span>
-                </Link>
-                <Link to="/teacher/courses/new" className="nav-link">
-                    <FaPlusCircle /> <span className="link-text">Create Course</span>
-                </Link>
-                <Link to="/teacher/profile" className="nav-link">
-                    <FaUserCircle />
-                    <span className="link-text">Profile</span>
-                </Link>
-            </nav>
-        </aside>
-    );
-
     const AssignmentForm = () => (
         <form onSubmit={handleCreateAssignment} className="form-neon" style={{padding: '20px', border: '1px solid var(--neon-pink)', borderRadius: '8px', marginBottom: '20px'}}>
             <h4><FaPlusCircle /> Create New Assignment</h4>
@@ -635,6 +593,48 @@ const TeacherCourseDetails = () => {
         </form>
     );
 
+    const CourseNavbar = () => (
+        <nav className="dashboard-navbar-neon">
+            <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
+                {isSidebarOpen ? <FaTimes /> : <FaBars />}
+            </button>
+            <div className="logo"><FaUniversity className="logo-icon"/> INFINITY  LMS</div>
+            <div className="nav-profile-group">
+                <span className="student-name">
+                    <FaUserCircle /> <strong>{currentUserName}</strong>({role})
+                </span>
+                <button className="btn-logout-neon" onClick={handleLogout}>
+                    <FaSignOutAlt /> Logout
+                </button>
+            </div>
+        </nav>
+    );
+
+    const CourseSidebar = () => (
+        <aside className={`dashboard-sidebar-neon ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
+            <div className="sidebar-header">TEACHER MENU</div>
+            <nav className="sidebar-nav">
+                <Link to="/teacher" className="nav-link">
+                    <FaListAlt /> <span className="link-text">Dashboard</span>
+                </Link>
+                <Link to="/teacher/courses" className="nav-link">
+                    <FaChalkboardTeacher /> <span className="link-text">My Courses</span>
+                </Link>
+                <Link to="/teacher/grading" className="nav-link">
+                    <FaGraduationCap /> <span className="link-text">Grading Center</span>
+                </Link>
+                <Link to="/teacher/courses/new" className="nav-link">
+                    <FaPlusCircle /> <span className="link-text">Create Course</span>
+                </Link>
+                <Link to="/teacher/profile" className="nav-link">
+                    <FaUserCircle />
+                    <span className="link-text">Profile</span>
+                </Link>
+            </nav>
+        </aside>
+    );
+
+    
     const AssignmentList = () => (
         <div className="widget-card assignment-list-section" style={{ marginTop: '20px', borderTop: '1px solid var(--neon-green)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -681,7 +681,7 @@ const TeacherCourseDetails = () => {
                                 
                                 <p style={{ fontSize: '0.9em', color: 'var(--text-faded)' }}>{assignment.description}</p>
                                 <p>
-                                    <FaClock /> **Due:** {new Date(assignment.dueDate).toLocaleString()}
+                                    <FaClock /> <strong>Due:</strong> {new Date(assignment.dueDate).toLocaleString()}
                                 </p>
                                 
                                 {assignment.Resources && assignment.Resources.length > 0 && (

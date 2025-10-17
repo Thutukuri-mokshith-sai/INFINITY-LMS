@@ -32,15 +32,12 @@ const sendVerificationEmail = async (user, purpose = 'Verification') => {
     // 3. Construct the email
     const subject = `Your LMS ${purpose} Code`;
     const htmlContent = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-            <h3 style="color: #333;">Hello ${user.name},</h3>
-            <p>Your one-time <strong>${purpose}</strong> code is:</p>
-            <h1 style="color: #007bff; font-size: 32px; letter-spacing: 5px; text-align: center; background-color: #f4f4f4; padding: 10px; border-radius: 6px;">${otp}</h1>
-            <p>This code is valid for <strong>${OTP_VALID_MINUTES} minutes</strong>.</p>
-            <p>If you did not request this, please ignore this email.</p>
-            <hr style="border: 0; border-top: 1px solid #eee;">
-            <p style="font-size: 12px; color: #777;">Thank you,<br>${SENDER_NAME}</p>
-        </div>
+        <p>Hello ${user.name},</p>
+        <p>Your one-time **${purpose}** code is:</p>
+        <h2 style="color: #4CAF50;">${otp}</h2>
+        <p>This code is valid for **10 minutes**.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <p>Thank you,<br>${SENDER_NAME}</p>
     `;
 
     const msg = {

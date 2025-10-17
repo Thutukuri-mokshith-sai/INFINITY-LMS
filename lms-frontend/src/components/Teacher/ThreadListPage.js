@@ -12,7 +12,7 @@ import axios from 'axios';
 // Assuming the necessary CSS file exists for styling
 import './TeacherCourses.css'; 
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://lms-backend-foaq.onrender.com/api';
 
 // ====================================================
 // 🚀 API FUNCTIONS (Mapped from forumController & routes)
@@ -544,7 +544,7 @@ const EnhancedTeacherForum = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div style={{ flex: 1 }}>
                                     <h4>
-                                        <Link to={`/threads/${thread.id}`} className="neon-link">
+                                        <Link to={`/student/threads/${thread.id}`} className="neon-link">
                                             {thread.title}
                                         </Link>
                                     </h4>
@@ -664,7 +664,7 @@ const EnhancedTeacherForum = () => {
                 <button className="sidebar-toggle-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                     {isSidebarOpen ? <FaTimes /> : <FaBars />}
                 </button>
-                <div className="logo"><FaUniversity className="logo-icon"/> The Matrix Academy</div>
+                <div className="logo"><FaUniversity className="logo-icon"/> INFINITY  LMS</div>
                 <div className="nav-profile-group">
                     <span className="student-name">
                         <FaUserCircle /> <strong>{currentUserName}</strong> ({role})

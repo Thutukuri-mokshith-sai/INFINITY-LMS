@@ -49,7 +49,20 @@ const Submission = sequelize.define('Submission', {
     gradedAt: {
         type: DataTypes.DATE,
         allowNull: true,
+    },
+    
+    // ======== NEW FIELDS FOR SIMILARITY CHECK / PLAGIARISM TRACKING ========
+    maxSimilarityScore: { // Stores the highest similarity score (e.g., 0.85 for 85%)
+        type: DataTypes.FLOAT,
+        allowNull: true, 
+        comment: 'Maximum similarity score found against other submissions for the same assignment.',
+    },
+    copiedFromStudentId: { // ID of the student whose submission was most similar
+        type: DataTypes.INTEGER,
+        allowNull: true, // Null if similarity is low or no match found
+        comment: 'ID of the student with the most similar submission (Foreign Key to User).',
     }
+    // ======================================================================
 }, {
     // Constraint to ensure a student can only submit once per assignment
     indexes: [

@@ -160,7 +160,7 @@ const TeacherDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-    const API_URL = 'https://lms-portal-backend-h5k8.onrender.com/api/teacherdashboard/dashboard'; 
+    const API_URL = 'https://lms-backend-foaq.onrender.com/api/teacherdashboard/dashboard'; 
 
     // 4. MODIFIED FETCH DATA EFFECT
     useEffect(() => {
@@ -279,7 +279,7 @@ const TeacherDashboard = () => {
                 {isSidebarOpen ? <FaTimes /> : <FaBars />}
             </button>
             <Link to="/teacher/" className="logo">
-                <FaUniversity className="logo-icon"/> The Matrix Academy
+                <FaUniversity className="logo-icon"/> INFINITY  LMS
             </Link>
             <div className="nav-profile-group">
                 <span className="student-name" onClick={handleProfileClick}>
@@ -334,7 +334,7 @@ const TeacherDashboard = () => {
                 <FaTimes className="error-icon" />
                 <h1>Data Fetch Error</h1>
                 <p>Could not load dashboard data: {error}</p>
-                <p>Please ensure you are logged in and the backend API is running at **`/api/teacherdashboard/dashboard`**.</p>
+                <p>Please ensure you are logged in and the backend API is running at <strong>`/api/teacherdashboard/dashboard`</strong>.</p>
             </div>
         );
     }

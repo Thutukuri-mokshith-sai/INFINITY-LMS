@@ -1,18 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import {
     FaUniversity, FaBookOpen, FaUserCircle, FaSignOutAlt, FaBars, FaTimes,
-    FaListAlt, FaStar, FaArrowRight, FaClock, FaSpinner
+    FaListAlt, FaStar, FaArrowRight, FaClock, FaSpinner, FaSearch
 } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import './StudentDashboard.css'; // Assuming shared styles
 import { useAuth } from "../../context/AuthContext";
 
 // --- Configuration ---
-const API_BASE_URL = 'https://lms-portal-backend-h5k8.onrender.com/api';
+const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
-// --- REUSED COMPONENTS (Keep these consistent for layout) ---
+// --- INLINE STYLES FOR NEW/ENHANCED COMPONENTS ---
+const neonStyles = {
+    filterBar: {
+        display: 'flex',
+        gap: '15px',
+        marginBottom: '30px',
+        padding: '15px',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        borderRadius: '10px',
+        border: '1px solid #0ff',
+        boxShadow: '0 0 10px rgba(0, 255, 255, 0.5)',
+        alignItems: 'center',
+    },
+    searchInput: {
+        flexGrow: 1,
+        padding: '10px 15px',
+        borderRadius: '5px',
+        border: '1px solid #0ff',
+        backgroundColor: '#001a1a',
+        color: '#fff',
+        fontSize: '16px',
+        boxShadow: '0 0 5px rgba(0, 255, 255, 0.3)',
+        outline: 'none',
+        transition: 'border-color 0.3s, box-shadow 0.3s',
+        minWidth: '250px',
+    },
+    sortDropdown: { // New Style
+        padding: '10px 15px',
+        borderRadius: '5px',
+        border: '1px solid #39ff14',
+        backgroundColor: '#001a1a',
+        color: '#39ff14',
+        fontSize: '16px',
+        boxShadow: '0 0 5px rgba(57, 255, 20, 0.5)',
+        cursor: 'pointer',
+        appearance: 'none', 
+        // Note: Using a background image for a custom arrow in a production environment 
+        // is recommended, but for simplicity here we'll rely on basic dropdown look.
+        // background-image property removed as it relies on specific SVG data URI which can be complex.
+        // If external CSS is available, this should be handled there.
+    },
+    searchIcon: {
+        color: '#0ff',
+        fontSize: '18px',
+    },
+    feedbackAlert: (type) => ({
+        padding: '15px',
+        borderRadius: '8px',
+        marginBottom: '20px',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        border: `1px solid ${type === 'success' ? '#39ff14' : '#ff073a'}`,
+        backgroundColor: `rgba(${type === 'success' ? '57, 255, 20' : '255, 7, 58'}, 0.1)`,
+        color: type === 'success' ? '#39ff14' : '#ff073a',
+        boxShadow: `0 0 10px ${type === 'success' ? '#39ff14' : '#ff073a'}`,
+    }),
+};
 
-// Placeholder for Profile Modal
+// --- REUSED COMPONENTS (kept the same) ---
+
 const ProfileModal = ({ authData, onClose }) => {
     // A simplified placeholder for the modal structure
     const { name, logout } = authData;
@@ -34,7 +91,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
         <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        <div className="logo"><FaUniversity className="logo-icon" /> The Matrix Academy</div>
+        <div className="logo"><FaUniversity className="logo-icon" />INFINITY LMS</div>
         <div className="nav-profile-group">
             <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
             <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -56,19 +113,21 @@ const DashboardSidebar = ({ isOpen }) => (
     </aside>
 );
 
-// Reusing CourseCard, now with an added 'isEnrolling' state for loading feedback
 const CourseCard = ({ course, onActionClick, isEnrolling }) => {
     return (
         <div className="course-card-neon available">
             <h4 className="card-title">{course.title}</h4>
             <p className="card-description">{course.description}</p>
+            {course.teacherName && (
+                <p className="card-teacher">Taught by: {course.teacherName}</p>
+            )}
             <div className="card-meta">
                 <span><FaClock /> {course.duration || 'N/A'}</span>
             </div>
             <button
                 className="btn-action-neon btn-enroll"
                 onClick={() => onActionClick(course)}
-                disabled={isEnrolling} // Disable while enrolling
+                disabled={isEnrolling}
             >
                 {isEnrolling ? <FaSpinner className="spinner" /> : <FaBookOpen />}
                 {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
@@ -76,12 +135,12 @@ const CourseCard = ({ course, onActionClick, isEnrolling }) => {
         </div>
     );
 };
-// ----------------------------------------------------------------------
 
 
 /**
  * EnrollCourses Component
  * Fetches all courses and allows students to enroll in non-enrolled courses.
+ * Includes new search/filter and sorting functionality.
  */
 const EnrollCourses = () => {
     const auth = useAuth();
@@ -96,16 +155,15 @@ const EnrollCourses = () => {
     const [allCourses, setAllCourses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    // NEW STATE: To track which course is currently being enrolled
     const [enrollingCourseId, setEnrollingCourseId] = useState(null);
-    // NEW STATE: Feedback for successful enrollment
     const [enrollmentFeedback, setEnrollmentFeedback] = useState(null);
+    
+    // NEW STATE for search/filter and sorting
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('title_asc'); // 'title_asc', 'title_dsc'
 
 
-    // Assuming user object has an enrolledCourses array for filtering
-    // NOTE: This array should be populated when the user logs in, or we need 
-    // to fetch the student's enrolled courses separately to correctly filter.
-    // For now, we'll assume it's part of the user context.
+    // IMPORTANT: Assuming user object has an enrolledCourseIds array for filtering
     const enrolledCourseIds = user?.enrolledCourseIds || [];
 
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
@@ -116,7 +174,7 @@ const EnrollCourses = () => {
         navigate('/login');
     };
 
-    // --- API Fetch Logic: Get ALL Courses ---
+    // --- API Fetch Logic: Get ALL Courses (same as before) ---
     useEffect(() => {
         const fetchAllCourses = async () => {
             setIsLoading(true);
@@ -130,7 +188,6 @@ const EnrollCourses = () => {
                     return;
                 }
 
-                // The courseRoutes endpoint is /api/courses
                 const response = await fetch(`${API_BASE_URL}/courses`, { 
                     method: 'GET',
                     headers: {
@@ -145,8 +202,7 @@ const EnrollCourses = () => {
                 }
 
                 const data = await response.json();
-                // Assuming the courses are returned directly in the array or data.courses
-                setAllCourses(data.courses || data.data.courses || data); // Adjust based on your actual response structure
+                setAllCourses(data.courses || data.data.courses || data); 
 
             } catch (err) {
                 console.error("Course fetch error:", err);
@@ -160,39 +216,36 @@ const EnrollCourses = () => {
     }, [token, navigate]);
 
 
-    // --- Enrollment Handler (Real API Call) ---
+    // --- Enrollment Handler (same as before) ---
     const handleEnroll = async (course) => {
-        setEnrollingCourseId(course.id); // Set loading state for this card
-        setEnrollmentFeedback(null); // Clear previous feedback
+        setEnrollingCourseId(course.id);
+        setEnrollmentFeedback(null);
 
         try {
-            // The enrollmentRouter path is /api/enrollments
             const response = await fetch(`${API_BASE_URL}/enrollments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ courseId: course.id }), // Pass courseId in the body
+                body: JSON.stringify({ courseId: course.id }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                // The backend returns 409 for already enrolled (handled in controller)
                 const message = data.message || `Failed to enroll in ${course.title}.`;
                 setEnrollmentFeedback({ type: 'error', message });
                 throw new Error(message);
             }
 
             // SUCCESS
-            setEnrollmentFeedback({ type: 'success', message: `Successfully enrolled in ${course.title}!` });
+            setEnrollmentFeedback({ type: 'success', message: `Successfully enrolled in ${course.title}! Redirecting to My Courses...` });
 
-            // 1. OPTIONAL: Update local user context/state here if available (e.g., using auth.updateUser)
-            // 2. Automatically refresh the available courses list by removing the newly enrolled course.
+            // Remove the newly enrolled course from the list
             setAllCourses(prevCourses => prevCourses.filter(c => c.id !== course.id));
             
-            // 3. Navigate to My Courses after a short delay for feedback
+            // Navigate to My Courses after a short delay for feedback
             setTimeout(() => {
                 navigate('/student/my-courses'); 
             }, 1500);
@@ -200,21 +253,38 @@ const EnrollCourses = () => {
 
         } catch (err) {
             console.error('Enrollment Failed:', err.message);
-            // If the error was already set from the response data, we keep it.
             if (!enrollmentFeedback) {
                 setEnrollmentFeedback({ type: 'error', message: err.message || 'An unexpected error occurred during enrollment.' });
             }
         } finally {
-            setEnrollingCourseId(null); // Clear loading state
+            setEnrollingCourseId(null);
         }
     };
 
 
-    // Filter courses based on the fetched list and the student's enrollment status
-    const availableCourses = allCourses.filter(course =>
-        // Only include courses that the student's ID is NOT in the enrolledCourseIds array
-        !enrolledCourseIds.includes(course.id)
-    );
+    // Filter and Sort Courses Logic
+    const availableAndFilteredCourses = allCourses
+        .filter(course => {
+            const isEnrolled = enrolledCourseIds.includes(course.id);
+            
+            const matchesSearch = 
+                course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.description.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            return !isEnrolled && matchesSearch;
+        })
+        .sort((a, b) => {
+            const titleA = a.title.toLowerCase();
+            const titleB = b.title.toLowerCase();
+
+            if (sortOption === 'title_asc') {
+                return titleA < titleB ? -1 : titleA > titleB ? 1 : 0;
+            } else if (sortOption === 'title_dsc') {
+                return titleA > titleB ? -1 : titleA < titleB ? 1 : 0;
+            }
+            // Default to no sorting or custom ID sorting
+            return 0;
+        });
 
     const mainContentClass = `main-content-area ${!isSidebarOpen ? 'sidebar-closed-content' : ''}`;
 
@@ -250,14 +320,40 @@ const EnrollCourses = () => {
                     
                     {/* Enrollment Feedback Section */}
                     {enrollmentFeedback && (
-                        <div className={`feedback-alert ${enrollmentFeedback.type}`}>
+                        <div style={neonStyles.feedbackAlert(enrollmentFeedback.type)}>
                             {enrollmentFeedback.message}
                         </div>
                     )}
-                    {/* --- */}
-
+                    
                     <section className="dashboard-section core-section">
                         <h2 className="section-title-neon">Available Courses for You</h2>
+
+                        {/* Filter/Search & Sort Bar */}
+                        <div style={neonStyles.filterBar}>
+                            <FaSearch style={neonStyles.searchIcon} />
+                            <input
+                                type="text"
+                                placeholder="Search by title or description..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={neonStyles.searchInput}
+                            />
+
+                            {/* NEW: Sort Dropdown */}
+                            <select
+                                value={sortOption}
+                                onChange={(e) => setSortOption(e.target.value)}
+                                style={neonStyles.sortDropdown}
+                                title="Sort Courses"
+                            >
+                                <option value="title_asc">Sort (A-Z)</option>
+                                <option value="title_dsc">Sort (Z-A)</option>
+                                {/* Add more sorting options here (e.g., duration, popularity) */}
+                            </select>
+                            {/* --- */}
+
+                        </div>
+
 
                         {isLoading && (
                             <div className="loading-state">
@@ -273,22 +369,20 @@ const EnrollCourses = () => {
                             </div>
                         )}
 
-                        {!isLoading && !error && availableCourses.length > 0 ? (
+                        {!isLoading && !error && availableAndFilteredCourses.length > 0 ? (
                             <div className="courses-grid">
-                                {availableCourses.map(course => (
+                                {availableAndFilteredCourses.map(course => (
                                     <CourseCard
                                         key={course.id}
                                         course={course}
-                                        // Pass the enrollment handler
                                         onActionClick={handleEnroll}
-                                        // Check if this specific course is currently enrolling
                                         isEnrolling={enrollingCourseId === course.id} 
                                     />
                                 ))}
                             </div>
                         ) : (!isLoading && !error && (
                             <div className="widget-card widget-empty-state">
-                                <p>You are currently enrolled in all available courses. Great job!</p>
+                                <p>No courses found matching your criteria. You might be enrolled in all of them!</p>
                             </div>
                         ))}
                     </section>

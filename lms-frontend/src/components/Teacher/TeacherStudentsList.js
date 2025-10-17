@@ -46,7 +46,7 @@ const TeacherDashboardNavbar = ({ toggleSidebar, isSidebarOpen, name, role, hand
             {isSidebarOpen ? <FaTimes /> : <FaBars />}
         </button>
         <Link to="/teacher" className="logo">
-            <FaUniversity className="logo-icon"/> The Matrix Academy
+            <FaUniversity className="logo-icon"/> INFINITY  LMS
         </Link>
         <div className="nav-profile-group">
             <span className="student-name">
@@ -102,7 +102,7 @@ const TeacherStudentsList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    const API_URL = 'https://lms-portal-backend-h5k8.onrender.com/api/teacherdashboard/students';
+    const API_URL = 'https://lms-backend-foaq.onrender.com/api/teacherdashboard/students';
 
     // 3. FETCH DATA EFFECT
     useEffect(() => {

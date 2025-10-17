@@ -715,7 +715,304 @@ button {
     box-shadow: 0 0 15px var(--red-neon);
     transform: scale(1.01);
 }
+/* --- NEW CORE GRADE CENTER STYLES (Complementing existing .course-list-table) --- */
 
+.grade-list-table .table-header,
+.grade-list-table .table-row {
+    /* Override grid to accommodate new columns: Student, Course, Assignment, Submitted, Status, Grade, Actions */
+    grid-template-columns: 1.5fr 1.2fr 2fr 1fr 0.8fr 0.8fr 1.5fr; 
+    gap: 10px; /* Adjust gap for better column separation */
+}
+
+/* Specific column alignment/styling */
+.grade-list-table .col-student {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+.grade-list-table .col-submitted {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    /* Increased contrast for better readability on dark background */
+    color: #a7f3d0; 
+}
+.grade-list-table .col-grade {
+    font-weight: 700;
+    color: var(--neon-color); /* Highlight the grade value */
+    text-align: center;
+    /* Added subtle glow for the grade value */
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+}
+.grade-list-table .col-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Status Badges */
+.col-status {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    text-transform: uppercase;
+    /* Ensure the text is highlighted by the glow effect */
+    letter-spacing: 0.5px;
+}
+.status-pending {
+    color: var(--red-neon);
+    background-color: rgba(255, 99, 71, 0.15);
+    box-shadow: 0 0 8px rgba(255, 99, 71, 0.6); /* Enhanced glow effect */
+}
+.status-graded {
+    color: var(--highlight-green);
+    background-color: rgba(16, 185, 129, 0.15);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); /* Enhanced glow effect */
+}
+
+/* Action Buttons within Table */
+.grade-list-table .btn-edit {
+    padding: 6px 10px;
+    font-size: 13px;
+    background-color: var(--neon-color);
+    color: var(--dark-bg);
+    font-weight: 600;
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out; /* Added transition for smoother hover */
+}
+.grade-list-table .btn-edit:hover {
+    box-shadow: var(--neon-shadow-blue);
+    background-color: #33ffff;
+    transform: translateY(-1px); /* Subtle lift on hover */
+}
+
+.btn-delete-grade {
+    padding: 6px 10px;
+    font-size: 13px;
+    background-color: rgba(255, 99, 71, 0.2);
+    color: var(--red-neon);
+    border: 1px solid var(--red-neon);
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out; /* Updated transition for smoothness */
+}
+.btn-delete-grade:hover:not(:disabled) {
+    background-color: var(--red-neon);
+    color: var(--dark-bg);
+    box-shadow: var(--neon-shadow-red);
+    transform: scale(1.05); /* Slight scale for visual feedback */
+}
+.btn-delete-grade:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    border-color: transparent;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #9ca3af;
+}
+
+/* --- TAB NAVIGATION STYLES --- */
+
+.tab-navigation-neon {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(0, 255, 255, 0.1);
+}
+
+.tab-btn-neon {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: var(--light-text);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 15px;
+}
+
+.tab-btn-neon:hover {
+    color: var(--neon-color);
+}
+
+.tab-btn-neon.active {
+    color: var(--neon-color);
+    border-bottom-color: var(--neon-color);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8); /* Enhanced active glow */
+}
+
+/* --- MODAL FORM STYLES --- */
+
+.form-group.info-group-neon {
+    margin-bottom: 20px;
+}
+.form-group.info-group-neon label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--highlight-green);
+    font-weight: 600;
+}
+.input-neon {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    color: var(--light-text);
+    border-radius: 5px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-family: inherit;
+}
+.input-neon:focus {
+    outline: none;
+    border-color: var(--neon-color);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 1); /* Increased focus glow for visibility */
+}
+.input-neon:disabled {
+    background: rgba(0, 0, 0, 0.3);
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+.input-neon[type="number"] {
+    max-width: 120px;
+}
+.input-neon textarea {
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* --- Added Primary Action Button Style --- */
+.modal-actions .btn-action-neon {
+    padding: 10px 20px;
+    background-color: var(--neon-color); /* Primary background color */
+    color: var(--dark-bg); /* Dark text for contrast */
+    border: 1px solid var(--neon-color);
+    border-radius: 5px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px; /* Added for visual punch */
+}
+
+.modal-actions .btn-action-neon:hover:not(:disabled) {
+    background-color: #33ffff; /* Slightly brighter on hover */
+    box-shadow: 0 0 20px var(--neon-color); /* Stronger neon glow on hover */
+    transform: translateY(-3px); /* Increased lift */
+}
+
+.modal-actions .btn-action-neon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+/* --- End Added Primary Action Button Style --- */
+
+
+/* Reusing btn-action-neon for primary save */
+.modal-actions .btn-secondary-neon {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--light-text);
+    border: 1px solid var(--neon-color);
+    border-radius: 5px;
+    font-weight: 600;
+    transition: all 0.3s ease; /* Added transition */
+}
+.modal-actions .btn-secondary-neon:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5); /* Subtle hover glow */
+}
+
+.alert-danger-neon {
+    padding: 15px;
+    background-color: rgba(255, 99, 71, 0.1);
+    border-left: 5px solid var(--red-neon);
+    color: var(--red-neon);
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    box-shadow: 0 0 10px rgba(255, 99, 71, 0.4); /* Added soft alert glow */
+}
+
+/* Additional utility for full-page error view */
+.full-page-view {
+    position: absolute; /* Override fixed positioning for better app flow */
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+}
+
+
+/* --- Media Query Adjustments for Grade Center Table --- */
+@media (max-width: 1024px) {
+    .grade-list-table .table-header,
+    .grade-list-table .table-row {
+        /* Reduced columns for space */
+        grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr; /* Student, Assignment, Status, Grade, Actions */
+    }
+    .grade-list-table .col-course,
+    .grade-list-table .col-submitted {
+        display: none; /* Hide least critical columns */
+    }
+}
+@media (max-width: 768px) {
+    .grade-list-table .table-header,
+    .grade-list-table .table-row {
+        /* Further reduction */
+        grid-template-columns: 2fr 1fr 1.5fr; /* Student/Assignment (combined), Status, Actions */
+    }
+    /* Hiding Assignment and Grade columns as before */
+    .grade-list-table .col-assignment,
+    .grade-list-table .col-grade {
+        display: none;
+    }
+    .grade-list-table .col-student {
+        flex-direction: column;
+        align-items: flex-start;
+        font-size: 14px;
+        /* Updated: Ensure the student column occupies the full width on smaller screens, 
+           and provide a way to display assignment context if needed, though hidden 
+           in the grid-template-columns. For this setup, the student name takes 
+           priority, and the column width is adjusted in grid-template-columns.
+        */
+    }
+    /* Add a style for a secondary text within col-student on mobile, 
+       assuming assignment info is nested inside on smaller views. */
+    .grade-list-table .col-student .secondary-info {
+        font-weight: 400;
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+
+    .grade-list-table .col-actions {
+        flex-direction: column;
+        gap: 5px;
+        justify-content: center;
+    }
+    .btn-delete-grade, .btn-edit {
+        width: 100%;
+        display: flex; /* Ensure button content is centered if needed */
+        justify-content: center;
+    }
+}
 /* --- ANIMATIONS --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.9); }
@@ -802,3 +1099,4 @@ button {
         grid-template-columns: 2fr 1fr 1.5fr;
     }
 }
+
