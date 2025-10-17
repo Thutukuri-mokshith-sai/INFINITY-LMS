@@ -232,6 +232,7 @@ const StudentCourseDetails = () => {
         const fetchCourseAndAssignments = async () => {
             setIsLoading(true);
             setError(null);
+            console.log(token);
             if (!token || !courseId) { setIsLoading(false); return; }
 
             try {

@@ -6,15 +6,9 @@ exports.getCourseLeaderboard = async (req, res) => {
     const { courseId } = req.params;
 
     try {
-        // 1️⃣ Fetch course and total max points
+        // 1️⃣ Fetch course info
         const course = await Course.findByPk(courseId, {
             attributes: ['id', 'title'],
-            include: [{
-                model: Assignment,
-                as: 'Assignments', // Ensure this alias matches your model association
-                attributes: [],
-                required: false
-            }],
             raw: true,
         });
 
@@ -25,7 +19,7 @@ exports.getCourseLeaderboard = async (req, res) => {
             });
         }
 
-        // Sum all assignment maxPoints for this course
+        // 2️⃣ Calculate total max points
         const totalMaxPointsResult = await Assignment.findOne({
             attributes: [
                 [Sequelize.fn('COALESCE', Sequelize.fn('SUM', Sequelize.col('maxPoints')), 0), 'totalMaxPoints']
@@ -35,19 +29,19 @@ exports.getCourseLeaderboard = async (req, res) => {
         });
         const maxTotalPoints = parseInt(totalMaxPointsResult.totalMaxPoints, 10);
 
-        // 2️⃣ Fetch students enrolled in this course
+        // 3️⃣ Fetch enrolled students using correct alias
         const students = await User.findAll({
             attributes: ['id', 'name'],
             include: [{
                 model: Enrollment,
+                as: 'Enrollments', // Must match alias in User model
                 attributes: [],
                 where: { courseId }
             }],
-            where: { role: 'Student' },
-            raw: true
+            where: { role: 'Student' }
         });
 
-        // 3️⃣ Fetch submission scores
+        // 4️⃣ Fetch submission scores
         const submissions = await Submission.findAll({
             attributes: [
                 'studentId',
@@ -63,7 +57,7 @@ exports.getCourseLeaderboard = async (req, res) => {
             raw: true
         });
 
-        // Map submission scores by studentId for easy lookup
+        // 5️⃣ Map submission scores
         const submissionMap = {};
         submissions.forEach(s => {
             submissionMap[s.studentId] = {
@@ -72,29 +66,32 @@ exports.getCourseLeaderboard = async (req, res) => {
             };
         });
 
-        // 4️⃣ Build leaderboard array with rank
+        // 6️⃣ Build leaderboard with rank
+        let leaderboard = students.map(student => {
+            const data = submissionMap[student.id] || { totalScore: 0, assignmentsSubmitted: 0 };
+            const scorePercentage = maxTotalPoints > 0
+                ? ((data.totalScore / maxTotalPoints) * 100).toFixed(1)
+                : 0;
+            return {
+                id: student.id,
+                name: student.name,
+                totalScore: data.totalScore,
+                scorePercentage: parseFloat(scorePercentage),
+                assignmentsSubmitted: data.assignmentsSubmitted
+            };
+        });
+
+        // Sort descending by totalScore
+        leaderboard.sort((a, b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name));
+
+        // Assign rank with ties
         let rank = 1;
-        let lastScore = null;
-        const leaderboard = students
-            .map(student => {
-                const data = submissionMap[student.id] || { totalScore: 0, assignmentsSubmitted: 0 };
-                const scorePercentage = maxTotalPoints > 0 
-                    ? ((data.totalScore / maxTotalPoints) * 100).toFixed(1)
-                    : 0;
-
-                if (lastScore !== data.totalScore) rank = leaderboard.length + 1;
-                lastScore = data.totalScore;
-
-                return {
-                    id: student.id,
-                    name: student.name,
-                    totalScore: data.totalScore,
-                    scorePercentage: parseFloat(scorePercentage),
-                    assignmentsSubmitted: data.assignmentsSubmitted,
-                    rank
-                };
-            })
-            .sort((a, b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name));
+        leaderboard.forEach((student, index) => {
+            if (index > 0 && student.totalScore < leaderboard[index - 1].totalScore) {
+                rank = index + 1;
+            }
+            student.rank = rank;
+        });
 
         res.status(200).json({
             success: true,
