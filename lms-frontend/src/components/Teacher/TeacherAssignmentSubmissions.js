@@ -70,6 +70,161 @@ const apiUnmarkSubmissionGrade = async (submissionId, token) => {
 };
 
 
+// --- UI COMPONENT: View Submission Modal ---
+
+const ViewSubmissionModal = ({ show, onClose, submission, assignment }) => {
+    if (!show || !submission) return null;
+
+    const similarityPercent = submission.maxSimilarityScore ? (submission.maxSimilarityScore * 100).toFixed(1) : null;
+    let similarityColor = 'var(--neon-green)';
+    if (similarityPercent) {
+        if (similarityPercent >= 80) similarityColor = 'var(--neon-pink)';
+        else if (similarityPercent >= 50) similarityColor = 'var(--neon-yellow)';
+    }
+
+    return (
+        <div className="modal-backdrop">
+            <div className="modal-content widget-card" style={{ maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+                <h2 className="form-title-neon"><FaFileDownload /> View Submission Details</h2>
+                <h3 style={{ borderBottom: '1px solid var(--neon-yellow)', paddingBottom: '5px', fontSize: '1.2em', marginBottom: '20px' }}>
+                    {assignment?.title}
+                </h3>
+                
+                {/* Student Information */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+                    <div>
+                        <p><strong><FaUserCircle /> Student:</strong> {submission.Student?.name || 'Unknown Student'}</p>
+                        <p><strong><FaClock /> Submitted:</strong> {new Date(submission.submittedAt).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p style={{ color: submission.isLate ? 'var(--neon-pink)' : 'var(--neon-green)', fontWeight: 'bold' }}>
+                            {submission.isLate ? <FaClock /> : <FaCheckCircle />} Status: {submission.isLate ? 'LATE SUBMISSION' : 'ON TIME'}
+                        </p>
+                        <p>
+                            <strong>Grade:</strong> 
+                            <span style={{ color: submission.grade !== null ? 'var(--neon-green)' : 'var(--neon-pink)', marginLeft: '10px', fontWeight: 'bold' }}>
+                                {submission.grade !== null ? `${submission.grade} / ${assignment.maxPoints}` : 'Not Graded Yet'}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Similarity Score */}
+                {similarityPercent && (
+                    <div style={{ 
+                        padding: '15px', 
+                        border: `2px solid ${similarityColor}`, 
+                        borderRadius: '5px', 
+                        backgroundColor: `${similarityColor}15`,
+                        marginBottom: '20px'
+                    }}>
+                        <p style={{ fontSize: '1.1em', fontWeight: 'bold', color: similarityColor }}>
+                            <FaExclamationTriangle /> Similarity Score: {similarityPercent}%
+                        </p>
+                        <p style={{ fontSize: '0.9em', marginTop: '5px', opacity: 0.8 }}>
+                            {similarityPercent >= 80 ? 'High similarity detected - Review carefully' : 
+                             similarityPercent >= 50 ? 'Moderate similarity detected' : 
+                             'Low similarity'}
+                        </p>
+                    </div>
+                )}
+
+                {/* Student Comment Section */}
+                <div style={{ 
+                    marginBottom: '20px', 
+                    padding: '15px', 
+                    border: '1px solid var(--neon-blue)', 
+                    borderRadius: '5px', 
+                    backgroundColor: 'rgba(0, 150, 255, 0.05)' 
+                }}>
+                    <h4 style={{ borderBottom: '1px dotted var(--neon-blue)', paddingBottom: '5px', marginBottom: '10px' }}>
+                        <FaCommentDots /> Student Comment:
+                    </h4>
+                    <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.95em' }}>
+                        {submission.studentComment || <em style={{ opacity: 0.6 }}>No comment provided by student</em>}
+                    </p>
+                </div>
+
+                {/* Submitted Resources Section */}
+                <div style={{ 
+                    padding: '15px', 
+                    border: '1px solid var(--neon-yellow)', 
+                    borderRadius: '5px',
+                    backgroundColor: 'rgba(255, 204, 0, 0.03)'
+                }}>
+                    <h4 style={{ borderBottom: '1px dotted var(--neon-yellow)', paddingBottom: '5px', marginBottom: '15px' }}>
+                        <FaPaperclip /> Submitted Files & Resources:
+                    </h4>
+                    
+                    {submission.SubmittedResources && submission.SubmittedResources.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {submission.SubmittedResources.map((res, idx) => (
+                                <div key={idx} style={{ 
+                                    padding: '12px', 
+                                    border: '1px solid #444', 
+                                    borderRadius: '4px',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <div>
+                                        <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                            <FaFileDownload /> {res.title || `Resource ${idx + 1}`}
+                                        </p>
+                                        <p style={{ fontSize: '0.85em', opacity: 0.7, wordBreak: 'break-all' }}>
+                                            {res.resourceLink}
+                                        </p>
+                                    </div>
+                                    <a 
+                                        href={res.resourceLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="btn-icon-primary-neon"
+                                        style={{ marginLeft: '15px', whiteSpace: 'nowrap' }}
+                                    >
+                                        <FaFileDownload /> Open
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="message-box info-neon">
+                            <FaInfoCircle /> No files or resources were attached by the student.
+                        </div>
+                    )}
+                </div>
+
+                {/* Assignment Resources (for reference) */}
+                {assignment?.Resources && assignment.Resources.length > 0 && (
+                    <div style={{ marginTop: '20px', padding: '15px', border: '1px dashed #555', borderRadius: '5px' }}>
+                        <h4 style={{ borderBottom: '1px dotted #555', paddingBottom: '5px', marginBottom: '10px', opacity: 0.8 }}>
+                            <FaPaperclip /> Assignment Resources (For Reference):
+                        </h4>
+                        <ul style={{ listStyleType: 'none', padding: 0, fontSize: '0.9em' }}>
+                            {assignment.Resources.map((res, idx) => (
+                                <li key={idx} style={{ marginBottom: '8px' }}>
+                                    <a href={res.resourceLink} target="_blank" rel="noopener noreferrer" className="neon-link">
+                                        [{res.fileType || 'Link'}] {res.title || 'View Resource'}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Close Button */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px' }}>
+                    <button onClick={onClose} className="btn-secondary-neon">
+                        <FaTimes /> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 // --- UI COMPONENT: Edit Assignment Modal ---
 
 const EditAssignmentModal = ({ show, onClose, assignment, onSave, loading }) => {
@@ -464,6 +619,7 @@ const TeacherAssignmentSubmissions = () => {
         }
         
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, role, navigate, token, assignmentId]);
 
     // --- Handler for Assignment Update ---
@@ -520,6 +676,19 @@ const TeacherAssignmentSubmissions = () => {
         setSuccessMessage(message);
         // Re-fetch submissions list to update the table
         fetchData(); 
+    };
+
+    // --- NEW: View Submission Details Modal State ---
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [selectedViewSubmission, setSelectedViewSubmission] = useState(null);
+
+    // --- Handler for View Submission ---
+    const handleViewSubmission = (submissionId) => {
+        const submission = submissions.find(sub => sub.id === submissionId);
+        if (submission) {
+            setSelectedViewSubmission(submission);
+            setShowViewModal(true);
+        }
     };
 
     // --- SIDEBAR AND NAVBAR HANDLERS ---
@@ -664,63 +833,109 @@ const TeacherAssignmentSubmissions = () => {
                                 <p className="loading-text"><FaSpinner className="spinner" /> Loading submissions...</p>
                             )}
 
-                            {!submissionsLoading && submissions.length > 0 ? (
+                             {!submissionsLoading && submissions.length > 0 ? (
                                 <table className="data-table-neon" style={{ width: '100%' }}>
                                     <thead>
                                         <tr>
                                             <th>Student</th>
                                             <th>Submitted At</th>
                                             <th>Status</th>
+                                            <th>Similarity</th>
                                             <th>Grade</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {submissions.map(sub => (
-                                            <tr key={sub.id}>
-                                                <td>{sub.Student ? sub.Student.name : 'Unknown Student'}</td>
-                                                <td>{new Date(sub.submittedAt).toLocaleString()}</td>
-                                                <td style={{ color: sub.isLate ? 'var(--neon-pink)' : 'var(--neon-green)' }}>
-                                                    {sub.isLate ? <FaClock /> : <FaCheckCircle />} {sub.isLate ? 'LATE' : 'On Time'}
-                                                </td>
-                                                <td>
-                                                    {sub.grade !== null ? `${sub.grade} / ${assignment.maxPoints}` : '—'}
-                                                </td>
-                                                <td>
-                                                    <button 
-                                                        className="btn-icon-secondary-neon" 
-                                                        title="View Submission Details"
-                                                        onClick={() => handleGradeAction(sub.id)} 
-                                                    >
-                                                        <FaFileDownload /> View
-                                                    </button>
-                                                    <button 
-                                                        className="btn-icon-primary-neon" 
-                                                        title="Grade Submission" 
-                                                        style={{ marginLeft: '8px' }}
-                                                        onClick={() => handleGradeAction(sub.id)} 
-                                                    >
-                                                        <FaGraduationCap /> Grade
-                                                    </button>
-                                                    <span title="Student Comment" style={{ marginLeft: '8px', opacity: sub.studentComment ? 1 : 0.3 }}><FaCommentDots /></span>
-                                                    
-                                                    {sub.SubmittedResources && sub.SubmittedResources.map((res, idx) => (
-                                                        <a key={idx} href={res.resourceLink} target="_blank" rel="noopener noreferrer" className="btn-icon-link-neon" title={`Download ${res.title}`}>
-                                                            <FaPaperclip />
-                                                        </a>
-                                                    ))}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {submissions.map(sub => {
+                                            const similarityPercent = sub.maxSimilarityScore ? (sub.maxSimilarityScore * 100).toFixed(1) : null;
+                                            let similarityColor = 'var(--neon-green)';
+                                            if (similarityPercent) {
+                                                if (similarityPercent >= 80) similarityColor = 'var(--neon-pink)';
+                                                else if (similarityPercent >= 50) similarityColor = 'var(--neon-yellow)';
+                                            }
+                                            
+                                            return (
+                                                <tr key={sub.id}>
+                                                    <td>{sub.Student ? sub.Student.name : 'Unknown Student'}</td>
+                                                    <td>{new Date(sub.submittedAt).toLocaleString()}</td>
+                                                    <td style={{ color: sub.isLate ? 'var(--neon-pink)' : 'var(--neon-green)' }}>
+                                                        {sub.isLate ? <FaClock /> : <FaCheckCircle />} {sub.isLate ? 'LATE' : 'On Time'}
+                                                    </td>
+                                                    <td style={{ color: similarityColor, fontWeight: 'bold' }}>
+                                                        {similarityPercent ? (
+                                                            <>
+                                                                <FaExclamationTriangle /> {similarityPercent}%
+                                                            </>
+                                                        ) : (
+                                                            "0%"
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {sub.grade !== null ? `${sub.grade} / ${assignment.maxPoints}` : '—'}
+                                                    </td>
+                                                    <td>
+                                                        {/* View Submission Details Button */}
+                                                        <button 
+                                                            className="btn-icon-secondary-neon" 
+                                                            title="View Submission Details"
+                                                            onClick={() => handleViewSubmission(sub.id)}
+                                                        >
+                                                            <FaFileDownload /> View
+                                                        </button>
+
+                                                        {/* Grade Submission Button */}
+                                                        <button 
+                                                            className="btn-icon-primary-neon" 
+                                                            title="Grade Submission" 
+                                                            style={{ marginLeft: '8px' }}
+                                                            onClick={() => handleGradeAction(sub.id)} 
+                                                        >
+                                                            <FaGraduationCap /> Grade
+                                                        </button>
+
+                                                        {/* Student Comment Icon */}
+                                                        <span 
+                                                            title="Student Comment" 
+                                                            style={{ marginLeft: '8px', opacity: sub.studentComment ? 1 : 0.3 }}
+                                                        >
+                                                            <FaCommentDots />
+                                                        </span>
+
+                                                        {/* Submitted Resources Links */}
+                                                        {sub.SubmittedResources?.map((res, idx) => (
+                                                            <a 
+                                                                key={idx} 
+                                                                href={res.resourceLink} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer" 
+                                                                className="btn-icon-link-neon" 
+                                                                title={`Download ${res.title}`}
+                                                                style={{ marginLeft: '4px' }}
+                                                            >
+                                                                <FaPaperclip />
+                                                            </a>
+                                                        ))}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             ) : (
-                                <div className="message-box info-neon">No submissions received for this assignment yet.</div>
+                                !submissionsLoading && <div className="message-box info-neon">No submissions received for this assignment yet.</div>
                             )}
                         </div>
                     )}
                 </div>
             </main>
+
+            {/* View Submission Modal */}
+            <ViewSubmissionModal 
+                show={showViewModal}
+                onClose={() => setShowViewModal(false)}
+                submission={selectedViewSubmission}
+                assignment={assignment}
+            />
 
             {/* Edit Assignment Modal */}
             <EditAssignmentModal 

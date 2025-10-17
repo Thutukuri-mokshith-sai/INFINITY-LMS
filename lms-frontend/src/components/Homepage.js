@@ -807,14 +807,14 @@ export default function HomePage() {
               <div className="logo-icon-wrapper">
                 <GraduationCap size={24} className="logo-icon" />
               </div>
-              <span className="logo-text">LearnHub</span>
+              <span className="logo-text">INFINITY LMS</span>
             </div>
 
             <div className="desktop-nav">
               <a href="#" className="nav-link">Home</a>
-              <a href="#" className="nav-link">Courses</a>
-              <a href="#" className="nav-link">About</a>
-              <a href="#" className="nav-link">Contact</a>
+              <a href="/login" className="nav-link">Courses</a>
+              <a href="/login" className="nav-link">About</a>
+              <a href="/login" className="nav-link">Contact</a>
             </div>
 
             <div className="auth-section">
@@ -861,10 +861,10 @@ export default function HomePage() {
           {mobileMenuOpen && (
             <div className="mobile-menu">
               <div className="mobile-menu-content">
-                <a href="#" className="mobile-nav-link">Home</a>
-                <a href="#" className="mobile-nav-link">Courses</a>
-                <a href="#" className="mobile-nav-link">About</a>
-                <a href="#" className="mobile-nav-link">Contact</a>
+                <a href="/login" className="mobile-nav-link">Home</a>
+                <a href="/login" className="mobile-nav-link">Courses</a>
+                <a href="/login" className="mobile-nav-link">About</a>
+                <a href="/login" className="mobile-nav-link">Contact</a>
 
                 {isLoggedIn ? (
                   <>
@@ -972,7 +972,7 @@ export default function HomePage() {
         <section className="section">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">Why Choose LearnHub?</h2>
+              <h2 className="section-title">Why Choose INFINITY LMS?</h2>
               <p className="section-subtitle">Everything you need for an amazing learning experience</p>
             </div>
 
@@ -1016,7 +1016,7 @@ export default function HomePage() {
             <div className="cta-card">
               <h2 className="cta-title">Ready to Start Learning?</h2>
               <p className="cta-description">
-                Join thousands of students already learning on LearnHub. Start your journey today!
+                Join thousands of students already learning on INFINITY LMS. Start your journey today!
               </p>
               {/* Updated CTA to use the navigation logic */}
               <button onClick={() => navigate('/signup')} className="btn-primary btn-large">
@@ -1036,7 +1036,7 @@ export default function HomePage() {
                 <div className="logo-icon-wrapper">
                   <GraduationCap size={24} className="logo-icon" />
                 </div>
-                <span className="logo-text">LearnHub</span>
+                <span className="logo-text">INFINITY LMS</span>
               </div>
               <p className="footer-description">
                 Empowering learners worldwide with quality education and innovative learning solutions.
@@ -1066,7 +1066,7 @@ export default function HomePage() {
             <div>
               <h3 className="footer-title">Contact</h3>
               <div className="footer-contact">
-                <p>Email: support@learnhub.com</p>
+                <p>Email: support@INFINITY LMS.com</p>
                 <p>Phone: +1 (555) 123-4567</p>
                 <p>Address: 123 Learning St, Education City</p>
               </div>
@@ -1076,7 +1076,7 @@ export default function HomePage() {
           <div className="footer-divider"></div>
 
           <div className="footer-copyright">
-            <p>&copy; 2025 LearnHub. All rights reserved.</p>
+            <p>&copy; 2025 INFINITY LMS. All rights reserved.</p>
           </div>
         </div>
       </footer>

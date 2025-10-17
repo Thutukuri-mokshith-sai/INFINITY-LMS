@@ -15,7 +15,7 @@ const materialRoutes = require('./routes/materialRoutes');
 const studentDashboardRouter = require('./routes/studentDashboardRoutes');
 const teacherDashboardRoutes = require('./routes/teacherDashboardRoutes');
 const gradeCenterRoutes = require('./routes/gradeCenterRoutes');
-
+const leaderboard =require('./routes/leaderboardRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -44,7 +44,7 @@ app.use('/api/material', materialRoutes);
 app.use('/api/studentdashboard', studentDashboardRouter);
 app.use('/api/teacherdashboard', teacherDashboardRoutes);
 app.use('/api/gradecenter', gradeCenterRoutes); 
-
+app.use('/api/leaderboard',leaderboard);
 // ✅ Database connection and server start
 const connectDB = async () => {
   try {

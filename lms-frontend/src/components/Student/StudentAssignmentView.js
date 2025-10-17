@@ -611,7 +611,43 @@ const StudentAssignmentView = () => {
                                             {submission.SubmittedResources.map((res, index) => (
                                                 <li key={index}>
                                                     {res.fileType === 'PDF' ? <FaRegFilePdf /> : <FaLink />} 
-                                                    <a href={res.resourceLink} target="_blank" rel="noopener noreferrer" className="neon-link">{res.title || res.resourceLink} ({res.fileType})</a>
+                                                    <a
+  href={res.resourceLink}
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    display: "inline-block",
+    padding: "10px 20px",
+    color: "#0ff", // neon cyan text
+    backgroundColor: "transparent",
+    border: "2px solid #0ff",
+    borderRadius: "8px",
+    textDecoration: "none",
+    fontWeight: "bold",
+    fontSize: "1.1rem",
+    textAlign: "center",
+    textShadow: "0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff",
+    boxShadow: "0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff",
+    transition: "all 0.3s ease-in-out",
+  }}
+  onMouseEnter={e => {
+    e.target.style.color = "#ff0"; // neon yellow on hover
+    e.target.style.borderColor = "#ff0";
+    e.target.style.textShadow = "0 0 5px #ff0, 0 0 10px #ff0, 0 0 20px #ff0";
+    e.target.style.boxShadow = "0 0 10px #ff0, 0 0 20px #ff0, 0 0 30px #ff0";
+    e.target.style.transform = "scale(1.05)";
+  }}
+  onMouseLeave={e => {
+    e.target.style.color = "#0ff";
+    e.target.style.borderColor = "#0ff";
+    e.target.style.textShadow = "0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff";
+    e.target.style.boxShadow = "0 0 10px #0ff, 0 0 20px #0ff, 0 0 30px #0ff";
+    e.target.style.transform = "scale(1)";
+  }}
+>
+  {res.title || res.resourceLink} ({res.fileType})
+</a>
+
                                                 </li>
                                             ))}
                                         </ul>

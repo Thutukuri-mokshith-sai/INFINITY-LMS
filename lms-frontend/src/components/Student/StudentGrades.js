@@ -4,13 +4,12 @@ import {
   FaListAlt, FaStar, FaArrowRight, FaSpinner, FaCalendarAlt
 } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
-// import './StudentDashboard.css'; // REMOVED: Styles are now injected
 import { useAuth } from "../../context/AuthContext";
 
 // API Base
 const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
-// --- CSS String to be injected ---
+// --- CSS String to be injected (Included for completeness but unchanged for brevity) ---
 const GRADES_CSS = `
 /* --- Neon Color Variables --- */
 :root {
@@ -152,7 +151,7 @@ const DashboardNavbar = ({ studentName, onLogout, onProfileToggle, onSidebarTogg
     <button className="sidebar-toggle-btn" onClick={onSidebarToggle}>
       {isSidebarOpen ? <FaTimes /> : <FaBars />}
     </button>
-    <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
+    <div className="logo"><FaUniversity className="logo-icon" /> INFINITY  LMS</div>
     <div className="nav-profile-group">
       <span className="student-name" onClick={onProfileToggle}><FaUserCircle /> {studentName}</span>
       <button className="btn-logout-neon" onClick={onLogout}><FaSignOutAlt /> Logout</button>
@@ -173,6 +172,63 @@ const DashboardSidebar = ({ isOpen }) => (
     </nav>
   </aside>
 );
+
+
+// ---------------------------
+// Helper Function for Letter Grade
+// ---------------------------
+/**
+ * Maps a numerical grade (percentage) to a letter grade and returns the
+ * corresponding CSS class for visual styling.
+ * * @param {number} grade - The numerical percentage grade.
+ * @returns {{letterGrade: string, className: string}}
+ */
+const getLetterGrade = (grade) => {
+    let letterGrade = 'F';
+    let className = 'grade-fail';
+
+    if (grade === null) {
+        return { letterGrade: 'N/A', className: '' };
+    }
+
+    if (grade >= 97) {
+        letterGrade = 'A+';
+        className = 'grade-a';
+    } else if (grade >= 93) {
+        letterGrade = 'A';
+        className = 'grade-a';
+    } else if (grade >= 90) {
+        letterGrade = 'A-';
+        className = 'grade-a';
+    } else if (grade >= 87) {
+        letterGrade = 'B+';
+        className = 'grade-b';
+    } else if (grade >= 83) {
+        letterGrade = 'B';
+        className = 'grade-b';
+    } else if (grade >= 80) {
+        letterGrade = 'B-';
+        className = 'grade-b';
+    } else if (grade >= 77) {
+        letterGrade = 'C+';
+        className = 'grade-c';
+    } else if (grade >= 73) {
+        letterGrade = 'C';
+        className = 'grade-c';
+    } else if (grade >= 70) {
+        letterGrade = 'C-';
+        className = 'grade-c';
+    } else if (grade >= 60) { // Assuming D is 60-69
+        letterGrade = 'D';
+        className = 'grade-fail'; // Using grade-fail for D for distinct visual, though it's technically passing
+    } else {
+        letterGrade = 'F';
+        className = 'grade-fail';
+    }
+
+    return { letterGrade, className };
+};
+
 
 // ---------------------------
 // Main Component
@@ -259,7 +315,11 @@ const StudentGrades = () => {
 
         {!isLoading && !error && gradesData.length > 0 && (
           <div className="grades-list-container">
-            {gradesData.map((course) => (
+            {gradesData.map((course) => {
+                // Get overall grade details once for clarity
+                const overallGradeDetails = getLetterGrade(course.overallGrade);
+
+                return (
               <div key={course.courseTitle} className="widget-card grade-item-neon">
                 <h2 className="card-title">{course.courseTitle}</h2>
                 <table className="grades-table">
@@ -273,15 +333,23 @@ const StudentGrades = () => {
                     {/* Check if there are any assignments */}
                     {Object.entries(course.grades).length > 0 ? (
                       // Map existing assignments
-                      Object.entries(course.grades).map(([assignment, grade], i) => (
-                        <tr key={i}>
-                          <td>{assignment}</td>
-                          {/* Apply dynamic class based on grade for visual feedback */}
-                          <td className={grade >= 90 ? 'grade-a' : grade >= 80 ? 'grade-b' : grade >= 70 ? 'grade-c' : grade !== null ? 'grade-fail' : ''}>
-                            {grade !== null ? `${grade}%` : 'Not graded yet'}
-                          </td>
-                        </tr>
-                      ))
+                      Object.entries(course.grades).map(([assignment, grade], i) => {
+                          const gradeDetails = getLetterGrade(grade);
+
+                          return (
+                            <tr key={i}>
+                              <td>{assignment}</td>
+                              {/* Apply dynamic class based on grade for visual feedback */}
+                              <td className={gradeDetails.className}>
+                                {grade !== null ? (
+                                    <>
+                                        <strong>{gradeDetails.letterGrade}</strong> 
+                                        &nbsp;({grade}%)
+                                    </>
+                                ) : 'Not graded yet'}
+                              </td>
+                            </tr>
+                        )})
                     ) : (
                       // Display message if no assignments are found
                       <tr>
@@ -298,14 +366,15 @@ const StudentGrades = () => {
                   <div className="overall-grade">
                     <FaStar /> Overall Average:{" "}
                     {/* Apply dynamic class to the strong tag */}
-                    <strong className={course.overallGrade >= 90 ? 'grade-a' : course.overallGrade >= 80 ? 'grade-b' : course.overallGrade >= 70 ? 'grade-c' : 'grade-fail'}>
-                        {`${course.overallGrade}%`}
+                    <strong className={overallGradeDetails.className}>
+                        {overallGradeDetails.letterGrade} 
+                        &nbsp;({`${course.overallGrade}%`})
                     </strong>
                   </div>
                 )}
                 
               </div>
-            ))}
+            )})}
           </div>
         )}
 
