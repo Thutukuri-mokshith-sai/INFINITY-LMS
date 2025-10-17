@@ -14,7 +14,7 @@ dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // 💡 FIX: Use the verified hardcoded email address or ensure SENDER_EMAIL is set in your .env
-const SENDER_EMAIL = '22781A33D2@svcet.edu.in';
+const SENDER_EMAIL = 'process.env.SENDER_EMAIL';
 const SENDER_NAME = 'INFINITY SQUAD LMS';
 
 // Helper function for sending email
@@ -341,4 +341,5 @@ exports.resendOTP = async (req, res) => {
         console.error('Error in resendOTP:', error);
         res.status(500).json({ message: `Server error during OTP resend: ${error.message}` });
     }
+
 };
