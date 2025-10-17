@@ -11,9 +11,13 @@ exports.getCourseLeaderboard = async (req, res) => {
             attributes: ['title'],
             include: [{
                 model: Assignment,
+                // ⭐ FIX: Add the 'as' alias which is most likely 'Assignments'
+                as: 'Assignments', 
                 attributes: [
                     [Sequelize.fn('SUM', Sequelize.col('maxPoints')), 'maxTotalPoints']
-                ]
+                ],
+                // Use required: false to ensure we get the course even if it has no assignments (LEFT JOIN)
+                required: false
             }]
         });
 
@@ -24,7 +28,7 @@ exports.getCourseLeaderboard = async (req, res) => {
             });
         }
 
-        // The max points calculation is nested under Assignments
+        // The max points calculation is nested under the Assignments alias
         const maxTotalPoints = course.Assignments[0] ? 
                                course.Assignments[0].dataValues.maxTotalPoints || 0 : 
                                0;
@@ -40,7 +44,7 @@ exports.getCourseLeaderboard = async (req, res) => {
         }
 
 
-        // 2. Fetch Leaderboard Data
+        // 2. Fetch Leaderboard Data (No changes needed here, as the literal query works with raw SQL)
         const leaderboardData = await User.findAll({
             attributes: [
                 'id',
@@ -80,10 +84,10 @@ exports.getCourseLeaderboard = async (req, res) => {
             having: Sequelize.literal('totalScore IS NOT NULL AND totalScore > 0'), 
             group: ['User.id', 'User.name'],
             order: [
-                [Sequelize.literal('totalScore'), 'DESC'], // Primary sort: Highest score first
-                ['name', 'ASC'] // Secondary sort: Alphabetical by name
+                [Sequelize.literal('totalScore'), 'DESC'], 
+                ['name', 'ASC'] 
             ],
-            raw: true, // Return raw JSON objects
+            raw: true,
         });
 
         // 3. Process and Rank the Data
@@ -96,7 +100,6 @@ exports.getCourseLeaderboard = async (req, res) => {
                                      ? ((totalScore / maxTotalPoints) * 100).toFixed(1) 
                                      : 0;
             
-            // Handle ties: students with the same score get the same rank
             if (lastScore !== totalScore) {
                 rank = index + 1;
             }

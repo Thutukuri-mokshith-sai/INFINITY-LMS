@@ -4,8 +4,8 @@ import {
     FaUniversity, FaBookOpen, FaUserCircle, FaSignOutAlt, FaBars, FaTimes,
     FaListAlt, FaStar, FaArrowLeft, FaClock, FaSpinner, FaCalendarAlt, FaChalkboardTeacher,
     FaFileSignature, FaCheckCircle, FaExclamationCircle, FaHourglassHalf, FaClipboardCheck,
-    FaComments, FaFolderOpen, FaLink 
-} from 'react-icons/fa'; // Removed unused icons like FaFileAlt, FaDownload
+    FaComments, FaFolderOpen
+} from 'react-icons/fa';
 import { useAuth } from "../../context/AuthContext";
 import './StudentDashboard.css';
 
@@ -13,7 +13,7 @@ import './StudentDashboard.css';
 const API_BASE_URL = 'https://lms-backend-foaq.onrender.com/api';
 
 // ---------------------------------------------------------------------
-// --- REUSED COMPONENTS (ProfileModal, DashboardNavbar, DashboardSidebar) ---
+// --- REUSED COMPONENTS ---
 // ---------------------------------------------------------------------
 
 const ProfileModal = ({ authData, onClose }) => {
@@ -58,7 +58,6 @@ const DashboardSidebar = ({ isOpen }) => (
     </aside>
 );
 
-// --- Assignment Status Card (Unchanged) ---
 const AssignmentCard = ({ assignment }) => {
     const { id, title, dueDate, maxPoints, submission } = assignment;
     const navigate = useNavigate();
@@ -111,7 +110,6 @@ const AssignmentCard = ({ assignment }) => {
     );
 };
 
-// --- Generic Course Link Card (Used for Materials and Forum) ---
 const CourseLinkCard = ({ icon, title, subtitle, linkTo, isDimmed = false }) => {
     if (isDimmed) {
         return (
@@ -133,9 +131,8 @@ const CourseLinkCard = ({ icon, title, subtitle, linkTo, isDimmed = false }) => 
     );
 };
 
-
 // ---------------------------------------------------------------------
-// --- NEW WIDGET COMPONENT: CourseLeaderboardWidget ---
+// --- CourseLeaderboardWidget (Robustness added in previous step) ---
 // ---------------------------------------------------------------------
 const CourseLeaderboardWidget = ({ courseId, token }) => {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -165,20 +162,27 @@ const CourseLeaderboardWidget = ({ courseId, token }) => {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to fetch leaderboard.');
+                    // Captures the backend's error message (e.g., "Assignment is associated with Course...")
+                    throw new Error(errorData.message || 'Failed to retrieve course leaderboard.');
                 }
                 
                 const data = await response.json();
                 
-                setLeaderboard(data.leaderboard || []);
+                // Check for data.leaderboard existence
+                if (!data.leaderboard || !Array.isArray(data.leaderboard)) {
+                    // This handles cases where the API returns 200 but no valid leaderboard array
+                    throw new Error('Leaderboard data structure is invalid or missing.');
+                }
+
+                setLeaderboard(data.leaderboard);
                 setCourseInfo({ 
-                    title: data.courseTitle,
-                    maxPoints: data.maxCoursePoints
+                    title: data.courseTitle || 'Course',
+                    maxPoints: data.maxCoursePoints || 0
                 });
                 
             } catch (err) {
                 console.error('Leaderboard Fetch Error:', err);
-                setError(err.message || 'An error occurred while loading the leaderboard.');
+                setError(err.message || 'An unknown error occurred while loading the leaderboard.');
             } finally {
                 setLoading(false);
             }
@@ -264,7 +268,6 @@ const StudentCourseDetails = () => {
         navigate('/login');
     };
 
-    // Helper to fetch submission status for an assignment
     const fetchSubmissionStatus = useCallback(async (assignmentId) => {
         try {
             const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/my-submission`, {
@@ -287,7 +290,6 @@ const StudentCourseDetails = () => {
         }
     }, [token]);
 
-    // Helper to fetch the Forum ID associated with the Course
     const fetchForumId = useCallback(async (id) => {
         try {
             const response = await fetch(`${API_BASE_URL}/forums/${id}`, {
@@ -309,7 +311,6 @@ const StudentCourseDetails = () => {
     }, [token]);
 
 
-    // Main useEffect to fetch all data
     useEffect(() => {
         const fetchCourseAndAssignments = async () => {
             setIsLoading(true);
@@ -405,7 +406,7 @@ const StudentCourseDetails = () => {
                                 <FaCalendarAlt size={24} /><h3>Start Date</h3><p>{course.startDate ? new Date(course.startDate).toLocaleDateString() : 'N/A'}</p>
                             </div>
                             
-                            {/* 🏆 NEW: LEADERBOARD WIDGET */}
+                            {/* 🏆 LEADERBOARD WIDGET */}
                             <CourseLeaderboardWidget 
                                 courseId={courseId} 
                                 token={token} 
