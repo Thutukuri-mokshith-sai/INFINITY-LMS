@@ -1,115 +1,71 @@
-const { User, Course, Assignment, Enrollment, Submission } = require('../models');
-const { Sequelize } = require('sequelize');
+// controllers/leaderboardController.js
 
-// GET /api/leaderboard/course/:courseId
+const { Submission, Assignment, User, Enrollment } = require('../models');
+const { Op } = require('sequelize');
+
 exports.getCourseLeaderboard = async (req, res) => {
-    const { courseId } = req.params;
-
     try {
-        // 1️⃣ Fetch course and ensure it exists
-        const course = await Course.findByPk(courseId, {
-            attributes: ['id', 'title'],
-            raw: true
-        });
+        const courseId = parseInt(req.params.courseId);
 
-        if (!course) {
-            return res.status(404).json({
-                success: false,
-                message: 'Course not found.'
-            });
+        if (!courseId) {
+            return res.status(400).json({ message: 'Invalid course ID' });
         }
 
-        // 2️⃣ Calculate total max points of all assignments in this course
-        const totalMaxPointsResult = await Assignment.findOne({
-            attributes: [
-                [Sequelize.fn('COALESCE', Sequelize.fn('SUM', Sequelize.col('maxPoints')), 0), 'totalMaxPoints']
-            ],
-            where: { courseId },
-            raw: true
-        });
-        const maxTotalPoints = parseInt(totalMaxPointsResult.totalMaxPoints, 10);
-
-        // 3️⃣ Fetch all students enrolled in this course
-        const students = await User.findAll({
-            attributes: ['id', 'name'],
-            include: [{
-                model: Enrollment,
-                as: 'Enrollments', // Must match alias in models
-                attributes: [],
-                where: { courseId }
-            }],
-            where: { role: 'Student' },
-            raw: true
-        });
-
-        // 4️⃣ Fetch submission scores grouped by student
-        const submissions = await Submission.findAll({
+        // Step 1: Aggregate total score and count of submitted assignments per student
+        const submissionsData = await Submission.findAll({
             attributes: [
                 'studentId',
-                [Sequelize.fn('COALESCE', Sequelize.fn('SUM', Sequelize.col('grade')), 0), 'totalScore'],
-                [Sequelize.fn('COUNT', Sequelize.col('id')), 'assignmentsSubmitted']
+                [Submission.sequelize.fn('COALESCE', Submission.sequelize.fn('SUM', Submission.sequelize.col('grade')), 0), 'totalScore'],
+                [Submission.sequelize.fn('COUNT', Submission.sequelize.col('Submission.id')), 'assignmentsSubmitted'],
             ],
-            include: [{
-                model: Assignment,
-                as: 'Assignment', // Must match alias in models
-                attributes: [],
-                where: { courseId }
-            }],
-            group: ['studentId'],
-            raw: true
+            include: [
+                {
+                    model: Assignment,
+                    as: 'Assignment', // must match alias defined in models
+                    attributes: [],
+                    where: { courseId: courseId }
+                }
+            ],
+            group: ['Submission.studentId'],
+            raw: true,
         });
 
-        // 5️⃣ Map submissions for easy lookup
-        const submissionMap = {};
-        submissions.forEach(s => {
-            submissionMap[s.studentId] = {
-                totalScore: parseInt(s.totalScore, 10),
-                assignmentsSubmitted: parseInt(s.assignmentsSubmitted, 10)
-            };
+        // Step 2: Fetch student names
+        const studentIds = submissionsData.map(s => s.studentId);
+        const students = await User.findAll({
+            where: { id: { [Op.in]: studentIds } },
+            attributes: ['id', 'name'],
+            raw: true,
         });
 
-        // 6️⃣ Build leaderboard with rank
-        const leaderboard = students.map(student => {
-            const data = submissionMap[student.id] || { totalScore: 0, assignmentsSubmitted: 0 };
-            const scorePercentage = maxTotalPoints > 0 
-                ? ((data.totalScore / maxTotalPoints) * 100).toFixed(1)
-                : 0;
-
+        // Map student names
+        const leaderboard = submissionsData.map(s => {
+            const student = students.find(st => st.id === s.studentId);
             return {
-                id: student.id,
-                name: student.name,
-                totalScore: data.totalScore,
-                assignmentsSubmitted: data.assignmentsSubmitted,
-                scorePercentage: parseFloat(scorePercentage)
+                studentId: s.studentId,
+                name: student ? student.name : 'Unknown',
+                totalScore: parseInt(s.totalScore),
+                assignmentsSubmitted: parseInt(s.assignmentsSubmitted),
             };
-        })
-        .sort((a, b) => b.totalScore - a.totalScore || a.name.localeCompare(b.name))
-        .map((student, index, arr) => {
-            // Calculate rank with ties
-            if (index === 0) {
-                student.rank = 1;
-            } else {
-                student.rank = student.totalScore === arr[index - 1].totalScore 
-                    ? arr[index - 1].rank 
-                    : index + 1;
+        });
+
+        // Step 3: Sort by totalScore descending
+        leaderboard.sort((a, b) => b.totalScore - a.totalScore);
+
+        // Step 4: Assign ranks
+        let rank = 1;
+        leaderboard.forEach((student, index) => {
+            if (index > 0 && student.totalScore < leaderboard[index - 1].totalScore) {
+                rank = index + 1;
             }
-            return student;
+            student.rank = rank;
+            student.scorePercentage = ((student.totalScore / (student.assignmentsSubmitted * 100)) * 100).toFixed(2);
         });
 
-        // 7️⃣ Send response
-        res.status(200).json({
-            success: true,
-            courseTitle: course.title,
-            maxCoursePoints: maxTotalPoints,
-            leaderboard
-        });
+        res.json({ leaderboard });
 
-    } catch (error) {
-        console.error('Leaderboard calculation error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to retrieve course leaderboard.',
-            error: error.message
-        });
+    } catch (err) {
+        console.error('Leaderboard calculation error:', err);
+        res.status(500).json({ message: 'Error calculating leaderboard', error: err.message });
     }
 };
