@@ -291,7 +291,7 @@ const StudentCourseDetails = () => {
                             <div className="widget-card detail-item"><FaCalendarAlt size={24} /><h3>Start Date</h3><p>{course.startDate ? new Date(course.startDate).toLocaleDateString() : 'N/A'}</p></div>
 
                             <CourseLeaderboardWidget courseId={courseId} token={token} />
-                            <CourseLinkCard icon={<FaFolderOpen size={24} />} title="Course Materials" subtitle="View files and links" linkTo={`/student/materials/${courseId}`} />
+                            <CourseLinkCard style="color :white;" icon={<FaFolderOpen size={24} />} title="Course Materials" subtitle="View files and links" linkTo={`/student/materials/${courseId}`} />
                             <CourseLinkCard icon={<FaComments size={24} />} title="Discussion Forum" subtitle={forumId ? "Go to Discussion Board" : "Forum not yet created"} linkTo={forumId ? `/student/forums/${forumId}` : '#'} isDimmed={!forumId} />
                             <div className="widget-card detail-item"><FaListAlt size={24} /><h3>Course ID</h3><p>{courseId}</p></div>
                         </div>
