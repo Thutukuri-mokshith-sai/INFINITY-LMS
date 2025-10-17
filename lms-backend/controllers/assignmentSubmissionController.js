@@ -10,7 +10,7 @@ const AssignmentResource = db.AssignmentResource;
 const SubmissionResource = db.SubmissionResource;
 const Course = db.Course;
 const Enrollment = db.Enrollment;
-const User = db.User; 
+const User = db.User;
 // ====================================================================
 
 // Helper function to check if a user is enrolled in a course
@@ -40,7 +40,7 @@ const checkTeacherAssignmentAuth = async (assignmentId, teacherId) => {
 // SIMILARITY CHECK CONFIGURATION AND HELPERS
 // ====================================================================
 
-const PLAGIARISM_API_URL = 'http://127.0.0.1:5000/compare-texts'; 
+const PLAGIARISM_API_URL = 'http://127.0.0.1:5000/compare-texts';
 const SIMILARITY_THRESHOLD = 0.70; // 70% similarity to be flagged
 
 /**
@@ -50,7 +50,7 @@ const SIMILARITY_THRESHOLD = 0.70; // 70% similarity to be flagged
  */
 const getSubmissionText = async (submissionId) => {
     // 1. Fetch resource links
-    const resources = await SubmissionResource.findAll({ 
+    const resources = await SubmissionResource.findAll({
         where: { submissionId },
         attributes: ['resourceLink', 'fileType']
     });
@@ -74,7 +74,7 @@ exports.checkSubmissionSimilarity = async (req, res) => {
     try {
         // Find the submission and its assignment details
         const submission = await Submission.findByPk(submissionId, {
-            include: [{ model: Assignment, as: 'Assignment' }] 
+            include: [{ model: Assignment, as: 'Assignment' }]
         });
 
         if (!submission) {
@@ -97,6 +97,8 @@ exports.checkSubmissionSimilarity = async (req, res) => {
         }
 
         // 3. Fetch all *previous* submissions and their student IDs for comparison
+        // Optimization: For performance, fetch text content for all previous submissions 
+        // concurrently using Promise.all, rather than sequentially in the loop later.
         const previousSubmissions = await Submission.findAll({
             where: {
                 assignmentId,
@@ -107,28 +109,42 @@ exports.checkSubmissionSimilarity = async (req, res) => {
 
         if (previousSubmissions.length === 0) {
             // No prior submissions, mark as unique and finish
-            await submission.update({ 
-                maxSimilarityScore: 0.0, 
-                copiedFromStudentId: null 
+            await submission.update({
+                maxSimilarityScore: 0.0,
+                copiedFromStudentId: null
             });
-            return res.status(200).json({ 
-                status: 'success', 
+            return res.status(200).json({
+                status: 'success',
                 message: 'No previous submissions to compare against. Marked as unique.',
                 data: { submission }
             });
         }
 
         // 4. Prepare data for the external API call
-        const comparisonDocs = [];
-        for (const prevSub of previousSubmissions) {
+        const comparisonDocsPromises = previousSubmissions.map(async (prevSub) => {
             const text = await getSubmissionText(prevSub.id);
             if (text) {
-                comparisonDocs.push({
+                return {
                     submissionId: prevSub.id,
                     studentId: prevSub.studentId,
                     text: text
-                });
+                };
             }
+            return null; // Return null if no text could be extracted
+        });
+
+        const comparisonDocs = (await Promise.all(comparisonDocsPromises)).filter(doc => doc !== null);
+        
+        if (comparisonDocs.length === 0) {
+            await submission.update({
+                maxSimilarityScore: 0.0,
+                copiedFromStudentId: null
+            });
+            return res.status(200).json({ 
+                status: 'success', 
+                message: 'Could not extract content from previous submissions. Marked as unique.',
+                data: { submission }
+            });
         }
         
         const allTexts = comparisonDocs.map(doc => doc.text);
@@ -137,39 +153,61 @@ exports.checkSubmissionSimilarity = async (req, res) => {
         // 5. Call external Python similarity service
         let similarityScores = [];
         try {
-            const apiResponse = await axios.post(PLAGIARISM_API_URL, { 
-                texts: allTexts 
+            const apiResponse = await axios.post(PLAGIARISM_API_URL, {
+                texts: allTexts
             });
+            // CRITICAL CHECK: Ensure the response format is as expected
+            if (!apiResponse.data || !Array.isArray(apiResponse.data.scores)) {
+                console.error('External Similarity API Error: Invalid response format from service.');
+                return res.status(503).json({
+                    status: 'warning',
+                    message: 'Could not perform similarity check due to unexpected response from external service.',
+                    error: 'Invalid response format'
+                });
+            }
             similarityScores = apiResponse.data.scores;
         } catch (apiError) {
-             console.error('External Similarity API Error:', apiError.message);
-             return res.status(503).json({ 
-                 status: 'warning', 
-                 message: 'Could not perform similarity check due to external service error.', 
-                 error: apiError.message 
-             });
+            console.error('External Similarity API Error:', apiError.message);
+            // Enhance: Provide a clearer message if the API is likely down or unreachable
+            const errorMessage = apiError.code === 'ECONNREFUSED' 
+                ? 'External service is unreachable (ECONNREFUSED).' 
+                : apiError.message;
+            
+            return res.status(503).json({
+                status: 'warning',
+                message: 'Could not perform similarity check due to external service error.',
+                error: errorMessage
+            });
         }
 
         // 6. Process results
         let maxSimilarityScore = 0.0;
         let copiedFromStudentId = null;
 
+        // Note: The external API is expected to return a single score for the last text (newSubmissionText) 
+        // compared to *each* of the preceding texts (previous submissions). 
+        // The comparisonDocs and similarityScores arrays must be in the same order.
         similarityScores.forEach((score, index) => {
-           if (score > maxSimilarityScore) {
-               maxSimilarityScore = score;
-               copiedFromStudentId = comparisonDocs[index].studentId;
-           }
+            // BEST PRACTICE: Use parseFloat to ensure 'score' is treated as a number
+            const numericScore = parseFloat(score); 
+            if (numericScore > maxSimilarityScore) {
+                maxSimilarityScore = numericScore;
+                copiedFromStudentId = comparisonDocs[index].studentId;
+            }
         });
         
         // Finalize student ID based on threshold
-        const finalCopiedFromStudentId = maxSimilarityScore >= SIMILARITY_THRESHOLD 
+        // BEST PRACTICE: Use a fixed number of decimal places for scores for storage/display
+        const finalMaxSimilarityScore = parseFloat(maxSimilarityScore.toFixed(4)); 
+        
+        const finalCopiedFromStudentId = finalMaxSimilarityScore >= SIMILARITY_THRESHOLD 
             ? copiedFromStudentId 
             : null;
         
         // 7. Update the Submission record
         await submission.update({
-            maxSimilarityScore: maxSimilarityScore,
-            copiedFromStudentId: finalCopiedFromStudentId 
+            maxSimilarityScore: finalMaxSimilarityScore,
+            copiedFromStudentId: finalCopiedFromStudentId
         });
 
         // 8. Success Response
@@ -178,15 +216,15 @@ exports.checkSubmissionSimilarity = async (req, res) => {
             : '';
             
         const resultMessage = finalCopiedFromStudentId
-            ? `WARNING: High similarity found! ${Math.round(maxSimilarityScore * 100)}% match${studentInfo}.`
-            : `Content is unique. Max Similarity: ${Math.round(maxSimilarityScore * 100)}%.`;
+            ? `⚠️ WARNING: High similarity found! ${Math.round(finalMaxSimilarityScore * 100)}% match${studentInfo}.`
+            : `Content is unique. Max Similarity: ${Math.round(finalMaxSimilarityScore * 100)}%.`;
 
         res.status(200).json({
             status: finalCopiedFromStudentId ? 'plagiarism-flagged' : 'success',
             message: resultMessage,
             data: { 
                 submission,
-                maxSimilarityScore: maxSimilarityScore,
+                maxSimilarityScore: finalMaxSimilarityScore,
                 copiedFromStudentId: finalCopiedFromStudentId
             }
         });
@@ -199,11 +237,8 @@ exports.checkSubmissionSimilarity = async (req, res) => {
 
 // ====================================================================
 // TEACHER ACTIONS (Creating, Updating, Deleting Assignments)
-// (Existing functions follow)
 // ====================================================================
 
-// User Story 4: As a teacher, I want to create assignments for a course.
-const { Course, Assignment, AssignmentResource, Enrollment, User } = require('../models');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || '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');
 
@@ -568,7 +603,6 @@ exports.getAllSubmissionsForCourse = async (req, res) => {
 
 // ====================================================================
 // STUDENT ACTIONS (Submitting, Updating, Deleting Assignments)
-// (Existing functions follow)
 // ====================================================================
 
 exports.submitAssignment = async (req, res) => {
