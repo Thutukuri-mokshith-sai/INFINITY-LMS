@@ -10,47 +10,31 @@ TEAM NAME :INFINITY SQUAD
 # HOSTING LINK : https://lms-portal-infinitysquad.netlify.app/teacher/grading
 
 # COMMANDS:
-for frontend :
-             cd lms-frontend  && npm start
-for backend :
-            cd lms-backend  && npm start
-💻 Technical Stack
-🎨 Frontend
 
+### 🖥️ Frontend
+cd lms-frontend && npm start
+### 🧠 Backend
+cd lms-backend && npm start💻 Technical Stack
+
+
+## 🎨 Frontend
 Framework: React.js
-
 Deployment: Netlify
-
 🧩 Backend
-
 Runtime: Node.js
-
 Framework: Express.js
-
 Authentication: JWT (JSON Web Tokens)
-
 Deployment: Render
-
 🗃️ Database
-
 Primary Database: PostgreSQL
-
 Cloud Database: Neon.db
-
 ☁️ File Storage
-
 Cloud Storage: Cloudinary
-
 ✉️ Emails
-
 Service: SendGrid
-
 🤖 NLP & AI
-
 Tokenization & Text Processing: SpaCy (en_core_web_md model)
-
 Chatbot Integration: Grok API
-
 🧱 Architecture Notes## Features
 ### 🥉 Bronze (Basic)
 - ✅ User Registration & Login (Student / Teacher)
@@ -80,4 +64,5 @@ Chatbot Integration: Grok API
 - ✅ Course material upload (PDF/PPT)
 - ✅ Notifications for assignments/grades
 - ✅ Course discussion forums
+
 
