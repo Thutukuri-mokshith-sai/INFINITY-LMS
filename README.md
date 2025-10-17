@@ -49,6 +49,8 @@ SendGrid
 SpaCy (`en_core_web_md` model)  
 ### Chatbot Integration
 Grok API  
+
+# Features
 ### 🥉 Bronze (Basic)
 - ✅ User Registration & Login (Student / Teacher)
 - ✅ Secure authentication (JWT)
@@ -77,6 +79,7 @@ Grok API
 - ✅ Course material upload (PDF/PPT)
 - ✅ Notifications for assignments/grades
 - ✅ Course discussion forums
+
 
 
 
