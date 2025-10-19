@@ -7,7 +7,7 @@
 | T      | Tarigonda Rajesh         |             | +91 93461 54179 |
 | C      | Chapala Praveen          |             | +91 90149 39196 |
 
-# HOSTING LINK : https://lms-portal-infinitysquad.netlify.app/teacher/grading
+# HOSTING LINK : https://lms-portal-infinitysquad.netlify.app/
 
 # COMMANDS:
 
@@ -81,6 +81,7 @@ Grok API
 - ✅ Course material upload (PDF/PPT)
 - ✅ Notifications for assignments/grades
 - ✅ Course discussion forums
+
 
 
 
